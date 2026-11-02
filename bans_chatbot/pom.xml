@@ -8,6 +8,10 @@
 	<packaging>jar</packaging>
 	<version>1.0.0</version>
 	<name>bans_chatbot</name>
+	<properties>
+		<java.version>21</java.version>
+		<maven.compiler.release>21</maven.compiler.release>
+	</properties>
 	<url>http://www.egovframe.go.kr</url>
 
 	<licenses>
@@ -94,18 +98,8 @@
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-devtools</artifactId>
-			<optional>true</optional>
-		</dependency>
-
-		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-dbcp2</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.hsqldb</groupId>
-			<artifactId>hsqldb</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -125,6 +119,20 @@
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>3.2.0</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.5.2</version>
+				<configuration>
+					<excludes><exclude>**/*OracleIT.java</exclude></excludes>
+					<excludedGroups>oracle-integration</excludedGroups>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
@@ -153,4 +161,42 @@
 			</plugin>
 		</plugins>
 	</build>
+	<profiles>
+		<profile>
+			<id>oracle</id>
+			<dependencies>
+				<dependency>
+					<groupId>com.oracle.database.jdbc</groupId>
+					<artifactId>ojdbc17</artifactId>
+					<version>23.26.4.0.0</version>
+					<scope>runtime</scope>
+				</dependency>
+			</dependencies>
+		</profile>
+		<profile>
+			<id>oracle-it</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<version>3.5.4</version>
+						<executions>
+							<execution>
+								<goals><goal>integration-test</goal><goal>verify</goal></goals>
+							</execution>
+						</executions>
+						<configuration>
+							<includes><include>**/*OracleIT.java</include></includes>
+							<groups>oracle-integration</groups>
+							<failIfNoTests>true</failIfNoTests>
+							<systemPropertyVariables>
+								<spring.profiles.active>oracle,oracle-it</spring.profiles.active>
+							</systemPropertyVariables>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>

@@ -12,6 +12,7 @@
 *.log
 logs/
 *.pid
+**/javac.*.args
 
 # Local environment and secrets
 .env
