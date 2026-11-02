@@ -7,6 +7,7 @@
 
 # Maven build output
 **/target/
+/.maven-repo/
 
 # Logs and runtime files
 *.log

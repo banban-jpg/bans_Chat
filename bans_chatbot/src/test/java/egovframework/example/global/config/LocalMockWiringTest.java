@@ -2,6 +2,9 @@ package egovframework.example.global.config;
 
 import egovframework.example.ai.client.AiAnswerPort;
 import egovframework.example.ai.client.MockGeminiClient;
+import egovframework.example.document.domain.DocumentPermission;
+import egovframework.example.document.repository.DocumentGrantProvider;
+import egovframework.example.document.repository.InMemoryDocumentGrantProvider;
 import egovframework.example.organization.repository.EmployeeDirectory;
 import egovframework.example.organization.repository.InMemoryEmployeeDirectory;
 import javax.sql.DataSource;
@@ -19,6 +22,7 @@ class LocalMockWiringTest {
     @Autowired ApplicationContext context;
     @Autowired EmployeeDirectory directory;
     @Autowired AiAnswerPort aiAnswerPort;
+    @Autowired DocumentGrantProvider documentGrants;
 
     @Test
     void mockProfileUsesOnlyNonpersistentAdapters() {
@@ -26,5 +30,7 @@ class LocalMockWiringTest {
         assertThat(directory).isInstanceOf(InMemoryEmployeeDirectory.class);
         assertThat(directory.findAll()).hasSize(20);
         assertThat(aiAnswerPort).isInstanceOf(MockGeminiClient.class);
+        assertThat(documentGrants).isInstanceOf(InMemoryDocumentGrantProvider.class);
+        assertThat(documentGrants.hasGrant("DOC-002", "EMP-014", DocumentPermission.READ)).isTrue();
     }
 }

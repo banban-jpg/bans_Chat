@@ -1,0 +1,13 @@
+employeeCode|loginId|roles
+EMP-001|emp001@bans.example|EMPLOYEE,ACCOUNT_ADMIN
+EMP-002|emp002@bans.example|EMPLOYEE,DOCUMENT_MANAGER
+EMP-005|emp005@bans.example|EMPLOYEE,DOCUMENT_EDITOR
+EMP-006|emp006@bans.example|EMPLOYEE,AUDITOR
+EMP-008|emp008@bans.example|EMPLOYEE,DOCUMENT_EDITOR
+EMP-009|emp009@bans.example|EMPLOYEE,DOCUMENT_MANAGER
+EMP-010|emp010@bans.example|EMPLOYEE
+EMP-011|emp011@bans.example|EMPLOYEE
+EMP-014|emp014@bans.example|EMPLOYEE
+EMP-015|emp015@bans.example|EMPLOYEE
+EMP-018|emp018@bans.example|EMPLOYEE
+EMP-019|emp019@bans.example|EMPLOYEE

@@ -14,7 +14,8 @@ class EmployeeDirectoryServiceTest {
     @Test
     void serviceReadsOnlyThroughItsDomainPort() {
         EmployeeDirectory directory = mock(EmployeeDirectory.class);
-        List<Employee> fixture = List.of(new Employee("EMP-001", "가상직원01", "D01"));
+        List<Employee> fixture = List.of(new Employee("EMP-001", "가상인사01", "D01",
+                "인사팀장", "2101", "emp001@bans.example", "가상 인사 정책 관리"));
         when(directory.findAll()).thenReturn(fixture);
 
         assertThat(new EmployeeDirectoryService(directory).syntheticEmployees()).isEqualTo(fixture);

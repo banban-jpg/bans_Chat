@@ -1,0 +1,21 @@
+employeeCode|displayName|departmentCode|jobTitle|extensionNo|companyEmail|dutySummary
+EMP-001|가상인사01|D01|인사팀장|2101|emp001@bans.example|가상 인사 정책 관리
+EMP-002|가상인사02|D01|인사담당|2102|emp002@bans.example|가상 휴가와 온보딩 안내
+EMP-003|가상인사03|D01|채용담당|2103|emp003@bans.example|가상 채용 절차 관리
+EMP-004|가상인사04|D01|교육담당|2104|emp004@bans.example|가상 교육 일정 관리
+EMP-005|가상재무01|D02|재무팀장|2201|emp005@bans.example|가상 정산 정책 관리
+EMP-006|가상재무02|D02|회계담당|2202|emp006@bans.example|가상 비용 검토
+EMP-007|가상재무03|D02|예산담당|2203|emp007@bans.example|가상 예산 계획 관리
+EMP-008|가상개발01|D03|개발팀장|2301|emp008@bans.example|가상 배포 일정 관리
+EMP-009|가상개발02|D03|백엔드개발자|2302|emp009@bans.example|가상 API 설계
+EMP-010|가상개발03|D03|프론트엔드개발자|2303|emp010@bans.example|가상 UI 구현
+EMP-011|가상개발04|D03|보안담당|2304|emp011@bans.example|가상 보안 점검
+EMP-012|가상개발05|D03|품질담당|2305|emp012@bans.example|가상 테스트 계획
+EMP-013|가상개발06|D03|운영담당|2306|emp013@bans.example|가상 서비스 모니터링
+EMP-014|가상영업01|D04|영업팀장|2401|emp014@bans.example|가상 계약 검토
+EMP-015|가상영업02|D04|영업담당|2402|emp015@bans.example|가상 고객 일정 관리
+EMP-016|가상영업03|D04|제안담당|2403|emp016@bans.example|가상 제안서 관리
+EMP-017|가상영업04|D04|지원담당|2404|emp017@bans.example|가상 영업 자료 관리
+EMP-018|가상지원01|D05|경영지원팀장|2501|emp018@bans.example|가상 장비 정책 관리
+EMP-019|가상지원02|D05|총무담당|2502|emp019@bans.example|가상 비품 신청 관리
+EMP-020|가상지원03|D05|시설담당|2503|emp020@bans.example|가상 시설 일정 관리

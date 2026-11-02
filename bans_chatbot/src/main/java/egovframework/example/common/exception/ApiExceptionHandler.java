@@ -35,8 +35,13 @@ public class ApiExceptionHandler {
         if (status == null) {
             status = HttpStatus.INTERNAL_SERVER_ERROR;
         }
-        String code = status == HttpStatus.NOT_FOUND ? "NOT_FOUND" : "HTTP_ERROR";
-        return error(status, code, "요청을 처리할 수 없습니다.", request);
+        return switch (status) {
+            case UNAUTHORIZED -> error(status, "AUTH_REQUIRED", "Authentication required.", request);
+            case FORBIDDEN -> error(status, "FORBIDDEN", "Access denied.", request);
+            case NOT_FOUND -> error(status, "NOT_FOUND", "Resource not found.", request);
+            case TOO_MANY_REQUESTS -> error(status, "RATE_LIMITED", "Too many requests.", request);
+            default -> error(status, "HTTP_ERROR", "Request could not be completed.", request);
+        };
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
