@@ -1,0 +1,34 @@
+# IDE and workspace state
+/.metadata/
+.idea/
+*.iml
+.vscode/
+.factorypath
+
+# Maven build output
+**/target/
+
+# Logs and runtime files
+*.log
+logs/
+*.pid
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+**/application-local.properties
+**/application-local.yml
+**/application-local.yaml
+**/*secret*
+**/*credential*
+**/*credentials*
+**/*private-key*
+**/*.pem
+**/*.key
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+desktop.ini
