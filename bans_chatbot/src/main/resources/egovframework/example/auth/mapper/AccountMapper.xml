@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.example.auth.mapper.AccountMapper">
+  <resultMap id="account" type="egovframework.example.auth.mapper.AccountRow">
+    <id property="employeeId" column="employee_id"/>
+    <result property="employeeCode" column="employee_code"/>
+    <result property="departmentCode" column="department_code"/>
+    <result property="employmentStatus" column="employment_status"/>
+    <result property="accountStatus" column="account_status"/>
+    <result property="passwordHash" column="password_hash"/>
+    <result property="credentialsVersion" column="credentials_version"/>
+    <result property="failedLoginCount" column="failed_login_count"/>
+    <result property="lockedUntil" column="locked_until"/>
+  </resultMap>
+
+  <sql id="accountColumns">
+    SELECT a.employee_id, e.employee_code, d.department_code, e.employment_status,
+           a.account_status, a.password_hash, a.credentials_version,
+           a.failed_login_count, a.locked_until
+      FROM employee_account a
+      JOIN employee e ON e.employee_id = a.employee_id
+      JOIN department d ON d.department_id = e.department_id
+     WHERE e.employee_code = #{employeeCode}
+  </sql>
+
+  <select id="find" resultMap="account"><include refid="accountColumns"/></select>
+  <select id="findForUpdate" resultMap="account">
+    <include refid="accountColumns"/> FOR UPDATE OF a.password_hash
+  </select>
+  <select id="activeRoles" resultType="string">
+    SELECT role_code FROM employee_role
+     WHERE employee_id = #{employeeId} AND revoked_at IS NULL
+  </select>
+
+  <update id="activate">
+    UPDATE employee_account
+       SET password_hash = #{hash}, account_status = 'ACTIVE',
+           credentials_version = credentials_version + 1,
+           session_version = session_version + 1,
+           failed_login_count = 0, locked_until = NULL,
+           activated_at = SYSTIMESTAMP, updated_at = SYSTIMESTAMP
+     WHERE employee_id = #{employeeId} AND account_status = 'PENDING'
+       AND credentials_version = #{expectedVersion}
+  </update>
+  <update id="recordFailure">
+    UPDATE employee_account SET failed_login_count = #{failures},
+           locked_until = #{lockedUntil}, updated_at = SYSTIMESTAMP
+     WHERE employee_id = #{employeeId}
+  </update>
+  <update id="clearFailures">
+    UPDATE employee_account SET failed_login_count = 0, locked_until = NULL,
+           updated_at = SYSTIMESTAMP WHERE employee_id = #{employeeId}
+  </update>
+</mapper>

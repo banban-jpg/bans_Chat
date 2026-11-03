@@ -24,7 +24,7 @@ public class ApiExceptionHandler {
     }
 
     @ExceptionHandler({MethodArgumentNotValidException.class, HandlerMethodValidationException.class,
-            ConstraintViolationException.class, HttpMessageNotReadableException.class})
+            ConstraintViolationException.class, HttpMessageNotReadableException.class, org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class})
     public ResponseEntity<ApiError> validation(Exception exception, HttpServletRequest request) {
         return error(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", "요청 값이 올바르지 않습니다.", request);
     }

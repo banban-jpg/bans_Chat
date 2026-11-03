@@ -14,41 +14,54 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = ApiContractMockMvcTest.ProbeController.class)
 @Import({ApiExceptionHandler.class, RequestIdFilter.class, PublicEndpointPolicy.class,
-        ApiContractMockMvcTest.ProbeController.class})
+        ApiContractMockMvcTest.ProbeController.class, ApiContractMockMvcTest.NoDefaultUser.class})
 @ActiveProfiles("test")
 class ApiContractMockMvcTest {
     @Autowired MockMvc mvc;
 
+    @TestConfiguration
+    static class NoDefaultUser {
+        @Bean UserDetailsService disabledDefaultUser() {
+            return username -> { throw new UsernameNotFoundException("No default user"); };
+        }
+    }
+
     @Test
     void successUsesDataEnvelope() throws Exception {
-        mvc.perform(get("/api/contract-probe").session(session()))
+        mvc.perform(get("/api/contract-probe").with(actor()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.value").value("ok"));
     }
 
     @Test
     void validationErrorHasServerRequestIdAndNoRejectedValue() throws Exception {
-        var result = mvc.perform(post("/api/contract-probe").session(session())
+        var result = mvc.perform(post("/api/contract-probe").with(actor()).with(csrf())
                         .header(RequestIdFilter.HEADER, "client-chosen-id")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"value\":\"\"}"))
@@ -64,7 +77,7 @@ class ApiContractMockMvcTest {
 
     @Test
     void unexpectedErrorHidesSensitiveMessage() throws Exception {
-        var body = mvc.perform(get("/api/contract-probe/fail").session(session()))
+        var body = mvc.perform(get("/api/contract-probe/fail").with(actor()))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"))
                 .andReturn().getResponse().getContentAsString();
@@ -73,7 +86,7 @@ class ApiContractMockMvcTest {
 
     @Test
     void responseStatusReasonIsNotExposed() throws Exception {
-        var body = mvc.perform(get("/api/contract-probe/forbidden").session(session()))
+        var body = mvc.perform(get("/api/contract-probe/forbidden").with(actor()))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("FORBIDDEN"))
                 .andReturn().getResponse().getContentAsString();
@@ -82,7 +95,7 @@ class ApiContractMockMvcTest {
 
     @Test
     void rateLimitReasonIsNotExposed() throws Exception {
-        var body = mvc.perform(get("/api/contract-probe/rate").session(session()))
+        var body = mvc.perform(get("/api/contract-probe/rate").with(actor()))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(jsonPath("$.code").value("RATE_LIMITED"))
                 .andExpect(jsonPath("$.requestId").isNotEmpty())
@@ -92,7 +105,7 @@ class ApiContractMockMvcTest {
 
     @Test
     void unknownApiPathUsesErrorEnvelope() throws Exception {
-        mvc.perform(get("/api/does-not-exist").session(session()))
+        mvc.perform(get("/api/does-not-exist").with(actor()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"))
                 .andExpect(jsonPath("$.requestId").isNotEmpty());
@@ -129,10 +142,12 @@ class ApiContractMockMvcTest {
     record ProbeRequest(@NotBlank String value) {
     }
 
-    private MockHttpSession session() {
-        var session = new MockHttpSession();
-        session.setAttribute(SessionBoundaryInterceptor.SESSION_ACTOR,
-                new SessionActor("EMP-001", "D01", AccountStatus.ACTIVE, Set.of(SecurityRole.EMPLOYEE)));
-        return session;
+    private RequestPostProcessor actor() {
+        return request -> {
+            user("contract-test").postProcessRequest(request);
+            request.setAttribute(SessionBoundaryInterceptor.SESSION_ACTOR,
+                    new SessionActor("EMP-001", "D01", AccountStatus.ACTIVE, Set.of(SecurityRole.EMPLOYEE)));
+            return request;
+        };
     }
 }

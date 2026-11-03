@@ -125,3 +125,74 @@ Before STEP 05 edits, Git showed the uncommitted STEP 03/04 source/docs work; it
 The V001 SHA-256 manifest was recomputed after the still-unapplied schema refinement and passed the offline source test. Oracle 26ai parser/constraint/trigger checks, DB authorization joins, concurrency and performance remain pending; no final DB readiness conclusion follows from these results.
 
 Final STEP 05 check: after adding the in-memory document-grant Bean assertion, the same offline `clean test` command passed again at **19:03:10 KST**, with **38 tests, 0 failures, 0 errors, 0 skipped** and 41 main/21 test sources compiled. A final addition of extra orphan/current-version assertions to the Oracle-only IT was then compiled with the same offline Maven arguments and `test-compile` at **19:03:49 KST**: **PASS**, 21 test sources compiled; the Oracle IT was **NOT_RUN**. `git diff --check` exited 0 at 19:02 KST (only Git's LF/CRLF conversion warnings). No Oracle/Gemini call was made during any of these checks.
+
+## Pre-STEP 06 recheck (2026-11-03 KST)
+
+Environment: Windows 11, Temurin Java 21.0.3, Maven Wrapper 3.9.6, eGov Boot parent 5.0.0 / inherited Spring Boot 3.5.6. `MAVEN_HOME` pointed to the existing Maven distribution. Commands ran from `bans_chatbot` with `-Dmaven.repo.local=C:\eGovFrameDev-5.0.2-Windows-64bit\workspace-egov\bans_Chat\.maven-repo`, the ignored workspace cache. No production source or dependency version changed.
+
+| Check | Status | Evidence / limit |
+|---|---|---|
+| `java -version`; `mvnw.cmd -version` | **PASS** | Java 21.0.3 and Maven 3.9.6, same Java runtime. |
+| `mvnw.cmd -o ... clean test` | **PASS** | 17:15:39 KST: 41 main and 21 test Java sources compiled; 38 tests, 0 failures, 0 errors, 0 skips; `BUILD SUCCESS`. Unit, Mockito, MockMvc, Spring profile, fixture and Oracle-source tests ran. Compilation also confirms current package imports. |
+| Three `*OracleIT` classes in ordinary Surefire | **SKIPPED** by configured suite selection; **NOT_RUN** as Oracle tests | Sources compiled, but Surefire excludes their name and tag. No Oracle connection or SQL execution. The `38/0/0/0` Surefire summary describes selected tests only. |
+| First `mvnw.cmd -o ... -DskipTests package` | **FAIL**, environment | 17:16:10 KST: Boot `repackage` could not resolve uncached plugin dependencies offline. Plain JAR goal ran, but full package failed. |
+| Approved dependency-cache refresh and `mvnw.cmd ... -DskipTests package` | **PASS** | 17:18:11 KST: full Boot repackage created `target/bans_chatbot-1.0.0.jar`; tests were intentionally skipped in this packaging command. |
+| Repeated `mvnw.cmd -o ... -DskipTests package` | **PASS** | 17:19:09 KST: full Boot package succeeded offline after cache refresh. |
+| SQLcl migration/seed and `oracleIntegrationTest.cmd` | **BLOCKED: ORACLE_26AI_NOT_INSTALLED** | Not invoked; Oracle SQL behavior, constraints, triggers, ACL, transactions, locks, and performance remain unverified. |
+| Real Gemini transport | **SKIPPED** | No production adapter or real call. |
+
+The initial packaging failure was resolved by fetching missing plugin artifacts into the ignored cache after approval; no POM change was needed. The package PASS and 38-test PASS are separate checks. Oracle readiness and production authentication remain unverified; see `docs/handoff.md` and `docs/oracle-validation-backlog.md`.
+
+## STEP 06 verification (2026-11-03 17:20-18:24 KST)
+
+Environment: Windows PowerShell, Temurin Java 21.0.3, Maven Wrapper 3.9.6, eGovFrame parent 5.0.0 / Spring Boot 3.5.6. Maven ran from `bans_chatbot`; `MAVEN_HOME` selected the existing wrapper distribution and `-Dmaven.repo.local=C:\eGovFrameDev-5.0.2-Windows-64bit\workspace-egov\bans_Chat\.maven-repo` selected the ignored cache. No Oracle URL, real Gemini key, Oracle server, or real Gemini client was used. Security starter artifacts were fetched into the ignored cache after the offline `test-compile` initially failed to resolve them; the subsequent compile passed. No framework version upgrade or H2 dependency was added.
+
+| Actual command/check | Status | Evidence and limit |
+|---|---|---|
+| `.\mvnw.cmd -o ... test-compile` before Security artifacts were cached | **FAIL**, resolved | Offline dependency resolution lacked the newly required Security artifacts; this was an environment/cache failure, not an Oracle failure. An approved online `test-compile` then **PASS** after retrieval. |
+| Intermediate `.\mvnw.cmd -o ... clean test` during implementation | **FAIL**, resolved | 38 tests selected; 10 failures while legacy MockMvc tests still asserted the interim fake-session boundary and a concurrent edit changed the schema manifest. Tests were updated to exercise the real security chain and the final manifest was regenerated. |
+| `.\mvnw.cmd -o '-Dmaven.repo.local=C:\eGovFrameDev-5.0.2-Windows-64bit\workspace-egov\bans_Chat\.maven-repo' clean test` | **PASS** at 17:50:43 KST | 59 main / 25 test Java files compiled; 45 tests, 0 failures, 0 errors, 0 skips; `BUILD SUCCESS`. Includes security-chain MockMvc activation/login/logout/me, CSRF, fixation, failure lock, inactive/version revocation, in-memory concurrent activation, existing policy tests, Oracle DDL manifest and Mapper XML parsing. This is not SQL execution. |
+| Same offline Maven arguments with `-DskipTests package` | **PASS** at 17:52:43 KST | Repackaged `target/bans_chatbot-1.0.0.jar`; tests intentionally **SKIPPED** in this separate packaging command. The preceding `clean test` is the test evidence. |
+| Direct `java -jar target/bans_chatbot-1.0.0.jar --spring.profiles.active=local-mock --server.port=18086` plus live HTTP | **PASS** around 17:55 KST | A random, non-committed `BANS_LOCAL_ADMIN_PASSWORD` was supplied only to the process environment. `/api/auth/csrf`, CSRF-protected admin `/api/auth/login`, and `/api/auth/me` returned the expected `EMP-001` identity; process was stopped. This demonstrates local ephemeral login only. |
+| `git diff --check` | **PASS** after STEP 06 edits | Exit 0; Git may warn about future line-ending normalization. |
+| `AuthOracleIT` and other `*OracleIT` in ordinary Surefire | **SKIPPED** by suite selection; as Oracle tests **NOT_RUN** | Test source compiled, but no Failsafe Oracle test ran. |
+| `@db/oracle/apply.sql`, seed, `.\oracleIntegrationTest.cmd`, real DB auth/lock/restart | **BLOCKED: ORACLE_26AI_NOT_INSTALLED** | No Oracle JDBC connection, schema application, or SQL execution. `AuthOracleIT` has an additional `ORACLE_AUTH_TEST=YES` opt-in for a dedicated migrated/seeded schema. |
+| Real Gemini Developer API | **SKIPPED** | No real transport or network request; 0 real calls. |
+
+The selected 45/0/0/0 Surefire result excludes Oracle-only cases. Offline XML parsing and mock concurrency do not establish Oracle transaction atomicity, JDBC timestamp mapping, SQL validity, or persistence after restart. Actual Oracle concurrency/reboot cases are still **NOT_RUN** because their executable test code has not been completed; see `docs/oracle-validation-backlog.md`.
+
+Final STEP 06 rerun after redacting the internal account object's string/JSON representation: `.\mvnw.cmd -o '-Dmaven.repo.local=C:\eGovFrameDev-5.0.2-Windows-64bit\workspace-egov\bans_Chat\.maven-repo' clean test package` **PASS at 18:24:22 KST**. The command compiled 59 main and 25 test sources, ran 45 selected tests with 0 failures/errors/skips, and created the Boot JAR. Surefire did not rerun the same tests during the `package` phase. This is the final source/test/package gate; Oracle IT remains **BLOCKED**, not passed.
+
+## STEP 07 verification (2026-11-03 18:27–18:35 KST)
+
+Environment rechecked: Windows 11 PowerShell, Temurin Java **21.0.3** (build/runtime), Maven Wrapper **3.9.6**, eGov parent **5.0.0**, Boot **3.5.6**. Existing 33 modified/untracked status entries on `dev` were preserved; STEP 07 introduced no dependency/version/schema change. No Oracle connection, SQL execution, Gemini request or dependency download was made. Maven used the ignored existing workspace cache.
+
+Commands from repository root used `.\bans_chatbot\mvnw.cmd -o '-Dmaven.repo.local=C:\eGovFrameDev-5.0.2-Windows-64bit\workspace-egov\bans_Chat\.maven-repo' -f bans_chatbot/pom.xml` plus the goals below. The equivalent from `bans_chatbot` is `.\mvnw.cmd -o '-Dmaven.repo.local=C:\eGovFrameDev-5.0.2-Windows-64bit\workspace-egov\bans_Chat\.maven-repo' clean test package`. `MAVEN_HOME` was `C:\Users\user\.m2\wrapper\dists\apache-maven-3.9.6-bin\439sdfsg2nbdob9ciift5h5nse\apache-maven-3.9.6`.
+
+| Actual check / goals | Status | Evidence / limits |
+|---|---|---|
+| `java -version`, wrapper `-version` | **PASS** | Java 21.0.3, wrapper Maven 3.9.6 running on the same JDK. |
+| `test-compile` | **PASS** 18:29:24 | 68 main / then 25 test sources compiled; no tests executed by this command. Ignored log `step07-build.log`. |
+| `test` | **PASS** 18:30:44 | 51 tests, 0 failures/errors/skips. Ignored log was under target and was removed by the subsequent clean. |
+| First `clean test package` after extra suspension test | **FAIL**, resolved, 18:32:11 | 52 tests, 0 assertion failures, 1 error. The new test tried provisioning EMP-003, which is one of 20 employees but not one of the 12 fixture accounts. Corrected the test to use existing account EMP-010; no fixture expansion or production workaround. Ignored `step07-final.log`. |
+| Final `clean test package` | **PASS** 18:34:26 | 68 main / 29 test source files compiled with release 21; **52 tests, 0 failures, 0 errors, 0 skips**, BUILD SUCCESS; repackaged Boot JAR. `package` did not rerun identical Surefire tests. Ignored `step07-final-rerun.log` and `bans_chatbot/target/surefire-reports/`. |
+| Organization MockMvc / Mockito / XML source checks | **PASS** within final suite | Five real security-chain MockMvc cases plus service-port validation and Mapper XML/bound-SQL test. Department filter, count/page limit, exact six public fields, departments, literal injection-shaped search, sort whitelist, numeric errors, CSRF, 401/403, create/conflict, role-field rejection, department/ACL refresh, departure exclusion, suspension/session/login denial and minimal success audit checked. These are DB-free tests. |
+| First `git diff --check` | **FAIL**, resolved | Four appended docs had an extra blank line at EOF. Trimmed only trailing whitespace; no existing content discarded. |
+| Optional packaged local-mock process + live localhost HTTP | **NOT_RUN** | Automatic approval review rejected the proposed process/HTTP command with `blocked by policy` before execution. No startup/live endpoint PASS is claimed for STEP 07. Existing STEP 06 live evidence remains historical. MockMvc login and API demonstration did run. |
+| All `*OracleIT` / `oracle-integration` in ordinary Surefire | **SKIPPED** by suite selection; Oracle execution **NOT_RUN** | New OrganizationOracleIT compiled; no Failsafe suite invoked. The selected suite's zero skips does not mean Oracle ran. |
+| Migration/seed, real organization Mapper SELECT/UPDATE/row locks/audit transaction/sort/performance | **BLOCKED: ORACLE_26AI_NOT_INSTALLED** | No Oracle server; `oracleIntegrationTest.cmd` not executed. Separate backlog lists executable preliminary IT and missing concurrency/restart/constraint cases. |
+| Real Gemini API / Mock Gemini network tests | Real API **SKIPPED**; network tests **NOT_RUN** | Organization-only STEP added no Gemini transport or network test; real call count 0. Existing offline AI policy/mock tests remained in the passing suite. |
+
+Final whitespace check result is recorded below after document synchronization. Passing fake search or XML parsing proves no Oracle predicate, collation, paging, lock, transaction, constraint or durability. STEP 07's DB-free API contract gate is met; final persistent DB/production readiness remains pending.
+
+STEP 07 file inventory (relative to repository root; separate from preserved STEP 06 changes):
+
+- Added production: `bans_chatbot/src/main/java/egovframework/example/organization/controller/OrganizationController.java`, `organization/dto/DirectoryModels.java`, `organization/service/OrganizationService.java`, `organization/repository/OrganizationRepository.java`, `organization/repository/InMemoryOrganizationRepository.java`, `organization/repository/OracleOrganizationRepository.java`, `organization/mapper/OrganizationMapper.java`, `audit/domain/PersonnelEvent.java`, `audit/mapper/PersonnelAuditMapper.java` (short paths share the same Java base directory).
+- Added XML: `bans_chatbot/src/main/resources/egovframework/example/organization/mapper/OrganizationMapper.xml`, `bans_chatbot/src/main/resources/egovframework/example/audit/mapper/PersonnelAuditMapper.xml`.
+- Incrementally updated production: `auth/repository/InMemoryAccountRepository.java`, `global/config/OracleMyBatisConfiguration.java`, `common/exception/ApiExceptionHandler.java` under the same Java base directory.
+- Added tests: `organization/controller/OrganizationMockMvcTest.java`, `organization/service/OrganizationServiceContractTest.java`, `organization/mapper/OrganizationMapperSourceTest.java`, `organization/mapper/OrganizationOracleIT.java` under `bans_chatbot/src/test/java/egovframework/example`; updated existing `auth/service/ActivationConcurrencyTest.java` for the injected organization port.
+- Updated docs: `docs/api-contract.md`, `docs/decisions.md`, `docs/handoff.md`, `docs/test-status.md`, `docs/oracle-validation-backlog.md`.
+
+Final synchronized `git diff --check`: **PASS**, exit 0 (only existing LF/CRLF normalization warnings). The organization Controller also labels local-mock responses `X-Demo-Data: SYNTHETIC_EPHEMERAL`; a final gate is rerun after this label addition.
+
+Final source gate after the local-mock synthetic-response label: same offline wrapper `clean test package` **PASS at 2026-11-03 18:36:46 KST**, 68 main / 29 test sources, **52 tests, 0 failures/errors/skips**, repackaged JAR. Ignored log: `step07-label-final.log`. This supersedes the earlier final timestamp for STEP 07. The label itself was not verified by a live HTTP run. Oracle execution remains **BLOCKED: ORACLE_26AI_NOT_INSTALLED**.

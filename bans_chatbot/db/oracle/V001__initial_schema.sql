@@ -39,13 +39,18 @@ CREATE TABLE employee_account (
     password_hash VARCHAR2(255 CHAR) NOT NULL,
     account_status VARCHAR2(20 CHAR) DEFAULT 'PENDING' NOT NULL,
     session_version NUMBER(10) DEFAULT 0 NOT NULL,
+    credentials_version NUMBER(10) DEFAULT 0 NOT NULL,
+    failed_login_count NUMBER(5) DEFAULT 0 NOT NULL,
+    locked_until TIMESTAMP(6) WITH TIME ZONE,
     activated_at TIMESTAMP(6) WITH TIME ZONE,
     updated_at TIMESTAMP(6) WITH TIME ZONE DEFAULT SYSTIMESTAMP NOT NULL,
     CONSTRAINT pk_employee_account PRIMARY KEY (employee_id),
     CONSTRAINT uq_account_login UNIQUE (login_id),
     CONSTRAINT fk_account_employee FOREIGN KEY (employee_id) REFERENCES employee (employee_id),
     CONSTRAINT ck_account_status CHECK (account_status IN ('PENDING', 'ACTIVE', 'SUSPENDED', 'DISABLED')),
-    CONSTRAINT ck_account_session_ver CHECK (session_version >= 0)
+    CONSTRAINT ck_account_session_ver CHECK (session_version >= 0),
+    CONSTRAINT ck_account_credentials_ver CHECK (credentials_version >= 0),
+    CONSTRAINT ck_account_failed_count CHECK (failed_login_count >= 0)
 );
 
 CREATE TABLE account_activation (

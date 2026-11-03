@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.example.auth.mapper.ActivationMapper">
+  <update id="invalidateOutstanding">
+    UPDATE account_activation SET consumed_at = SYSTIMESTAMP
+     WHERE employee_id = #{employeeId} AND consumed_at IS NULL
+  </update>
+  <insert id="issue">
+    INSERT INTO account_activation (employee_id, issued_by_employee_id, token_hash, expires_at)
+    VALUES (#{employeeId}, #{issuerEmployeeId}, #{tokenHash}, #{expiresAt})
+  </insert>
+  <update id="consume">
+    UPDATE account_activation SET consumed_at = SYSTIMESTAMP
+     WHERE employee_id = #{employeeId} AND token_hash = #{tokenHash}
+       AND consumed_at IS NULL AND expires_at &gt; SYSTIMESTAMP
+  </update>
+</mapper>

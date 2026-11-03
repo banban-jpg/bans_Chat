@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.example.organization.mapper.OrganizationMapper">
+ <sql id="fromFilter">
+ FROM employee e JOIN department d ON d.department_id=e.department_id
+ WHERE e.employment_status &lt;&gt; 'DEPARTED'
+ <if test="name != ''">AND INSTR(e.display_name, #{name}) &gt; 0</if>
+ <if test="departmentId != ''">AND d.department_code = #{departmentId}</if>
+ <if test="task != ''">AND INSTR(e.duty_summary, #{task}) &gt; 0</if>
+ </sql>
+ <select id="search" resultType="egovframework.example.organization.dto.DirectoryModels$EmployeeView">
+ SELECT e.employee_code AS employeeId, e.display_name AS displayName, d.department_code AS departmentCode,
+ e.job_title AS jobTitle, e.company_email AS companyEmail, e.extension_no AS extensionNo
+ <include refid="fromFilter"/>
+ ORDER BY <choose><when test="sort == 'name'">NLSSORT(e.display_name, 'NLS_SORT=BINARY'),</when><when test="sort == 'departmentId'">d.department_code,</when></choose> e.employee_code
+ OFFSET #{offset} ROWS FETCH NEXT #{size} ROWS ONLY
+ </select>
+ <select id="count" resultType="long">SELECT COUNT(e.employee_id) <include refid="fromFilter"/></select>
+ <select id="departments" resultType="egovframework.example.organization.domain.Department">
+ SELECT department_code AS departmentCode, department_name AS departmentName FROM department WHERE active_yn='Y' ORDER BY department_code
+ </select>
+ <select id="state" resultType="egovframework.example.organization.dto.DirectoryModels$State">
+ SELECT d.department_code AS departmentCode,e.employment_status AS status FROM employee e JOIN department d ON d.department_id=e.department_id WHERE e.employee_code=#{id}
+ </select>
+ <select id="lockEmployee" resultType="string">SELECT employee_code FROM employee WHERE employee_code=#{id} FOR UPDATE</select>
+ <insert id="create">
+ INSERT INTO employee (employee_code,display_name,department_id,job_title,company_email,extension_no,duty_summary,employment_status)
+ SELECT #{employeeId},#{displayName},department_id,#{jobTitle},#{companyEmail},#{extensionNo},#{task},'ACTIVE'
+ FROM department WHERE department_code=#{departmentId} AND active_yn='Y'
+ </insert>
+ <update id="change">
+ UPDATE employee SET
+ <choose>
+ <when test="department != null">department_id=(SELECT department_id FROM department WHERE department_code=#{department} AND active_yn='Y')</when>
+ <otherwise>employment_status=#{status}, departed_at=CASE WHEN #{status}='DEPARTED' THEN SYSTIMESTAMP ELSE NULL END</otherwise>
+ </choose>
+ WHERE employee_code=#{id}
+ <if test="department != null">AND EXISTS (SELECT 1 FROM department WHERE department_code=#{department} AND active_yn='Y')</if>
+ </update>
+</mapper>
