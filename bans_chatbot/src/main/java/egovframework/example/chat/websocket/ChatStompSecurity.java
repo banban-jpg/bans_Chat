@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
@@ -87,7 +88,9 @@ public class ChatStompSecurity implements ChannelInterceptor {
             @Override
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
                 var frame = StompHeaderAccessor.wrap(message);
-                if (frame.getCommand() != StompCommand.MESSAGE) return message;
+                // Broker messages can carry SimpMessageType.MESSAGE without a STOMP command.
+                if (frame.getMessageType() != SimpMessageType.MESSAGE
+                        && frame.getCommand() != StompCommand.MESSAGE) return message;
                 if (frame.getSessionId() == null) return null;
                 var attributes = liveSessions.get(frame.getSessionId());
                 if (!(attributes instanceof java.util.Map<?, ?> map)) return null;

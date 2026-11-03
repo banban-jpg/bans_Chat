@@ -27,7 +27,7 @@ class OracleSchemaSourceTest {
     void versionsAreOrderedAndAllSeventeenTablesExist() throws IOException {
         var scripts = migrationFiles();
         assertThat(scripts).extracting(path -> path.getFileName().toString())
-                .containsExactly("V001__initial_schema.sql", "V002__indexes_guards_roles.sql", "V003__chat_message_length_guard.sql");
+                .containsExactly("V001__initial_schema.sql", "V002__indexes_guards_roles.sql", "V003__chat_message_length_guard.sql", "V004__document_reviewer_assignment.sql", "V005__document_search_tags_indexes.sql");
         var versions = new HashSet<String>();
         for (Path script : scripts) {
             var matcher = VERSION.matcher(script.getFileName().toString());
@@ -94,9 +94,9 @@ class OracleSchemaSourceTest {
         String preflight = Files.readString(DIR.resolve("verify_empty.sql"), StandardCharsets.UTF_8);
         String verification = Files.readString(DIR.resolve("verify_schema.sql"), StandardCharsets.UTF_8);
         assertThat(apply).contains("WHENEVER SQLERROR EXIT SQL.SQLCODE", "@@verify_empty.sql",
-                "@@V001__initial_schema.sql", "@@V002__indexes_guards_roles.sql", "@@V003__chat_message_length_guard.sql", "@@verify_schema.sql");
+                "@@V001__initial_schema.sql", "@@V002__indexes_guards_roles.sql", "@@V003__chat_message_length_guard.sql", "@@V004__document_reviewer_assignment.sql", "@@V005__document_search_tags_indexes.sql", "@@verify_schema.sql");
         assertThat(preflight).contains("FROM user_objects", "MIGRATION_REQUIRES_EMPTY_SCHEMA");
-        assertThat(verification).contains("v_tables <> 17", "v_roles <> 5", "v_triggers <> 3");
+        assertThat(verification).contains("v_tables <> 18", "v_roles <> 5", "v_triggers <> 3");
     }
 
     @Test

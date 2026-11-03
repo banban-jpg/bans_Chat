@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.example.document.mapper.DocumentSearchMapper">
+ <sql id="columns">SELECT d.document_id AS documentId,d.document_code AS documentCode,v.version_id AS versionId,f.fragment_id AS fragmentId,d.document_title AS title,f.body_text AS body,TO_CHAR(d.updated_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.FF3"Z"') AS updatedAt</sql>
+ <sql id="authorizedFrom">
+  FROM document_fragment f
+  JOIN document_version v ON v.version_id=f.version_id AND v.version_state='PUBLISHED'
+  JOIN document d ON d.document_id=v.document_id AND d.current_version_id=v.version_id AND d.document_status IN ('APPROVED','IN_REVIEW')
+  JOIN employee viewer ON viewer.employee_code=#{employee} AND viewer.employment_status='ACTIVE'
+  JOIN employee_account account ON account.employee_id=viewer.employee_id AND account.account_status='ACTIVE'
+  WHERE f.ai_searchable='Y'
+    AND EXISTS (SELECT 1 FROM employee_role role WHERE role.employee_id=viewer.employee_id AND role.role_code='EMPLOYEE' AND role.revoked_at IS NULL)
+    AND (d.document_scope='COMPANY' OR d.document_scope='DEPARTMENT' AND d.department_id=viewer.department_id
+         OR d.owner_employee_id=viewer.employee_id
+         OR EXISTS (SELECT 1 FROM document_grant grant_row WHERE grant_row.document_id=d.document_id AND grant_row.employee_id=viewer.employee_id AND grant_row.permission_code='READ' AND grant_row.revoked_at IS NULL))
+ </sql>
+ <select id="find" resultType="egovframework.example.document.repository.DocumentSearchRepository$FragmentRow">
+  <include refid="columns"/><include refid="authorizedFrom"/>
+  AND (INSTR(d.document_title,#{query})>0 OR INSTR(d.document_category,#{query})>0
+       OR DBMS_LOB.INSTR(f.body_text,#{query})>0
+       OR EXISTS (SELECT 1 FROM document_tag t WHERE t.document_id=d.document_id AND INSTR(t.tag_value,#{query})>0))
+  ORDER BY d.updated_at DESC,d.document_id DESC,f.fragment_id DESC
+  OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+ </select>
+ <select id="source" resultType="egovframework.example.document.repository.DocumentSearchRepository$FragmentRow">
+  <include refid="columns"/><include refid="authorizedFrom"/>
+  AND d.document_id=#{documentId} AND v.version_id=#{versionId} AND f.fragment_id=#{fragmentId}
+ </select>
+</mapper>

@@ -42,7 +42,7 @@ class OracleSchemaOracleIT {
                 "Set ORACLE_EMPTY_SCHEMA_MIGRATION_TEST=YES only for a disposable empty schema");
         try (Connection connection = dataSource.getConnection()) {
             assertThat(scalar(connection, "SELECT COUNT(*) FROM user_objects")).isZero();
-            for (String file : List.of("V001__initial_schema.sql", "V002__indexes_guards_roles.sql", "V003__chat_message_length_guard.sql")) {
+            for (String file : List.of("V001__initial_schema.sql", "V002__indexes_guards_roles.sql", "V003__chat_message_length_guard.sql", "V004__document_reviewer_assignment.sql", "V005__document_search_tags_indexes.sql")) {
                 for (String statement : statements(Files.readAllLines(DIR.resolve(file), StandardCharsets.UTF_8))) {
                     try (Statement command = connection.createStatement()) {
                         command.execute(statement);
@@ -111,7 +111,7 @@ class OracleSchemaOracleIT {
                 + "'DEPARTMENT','EMPLOYEE','EMPLOYEE_ACCOUNT','ACCOUNT_ACTIVATION','SYSTEM_ROLE',"
                 + "'EMPLOYEE_ROLE','WORK_TASK','TASK_ASSIGNMENT','CHAT_ROOM','CHAT_MESSAGE',"
                 + "'CHAT_READ_STATE','DOCUMENT','DOCUMENT_VERSION','DOCUMENT_REVIEW',"
-                + "'DOCUMENT_GRANT','DOCUMENT_FRAGMENT','AUDIT_EVENT')")).isEqualTo(17);
+                + "'DOCUMENT_GRANT','DOCUMENT_FRAGMENT','DOCUMENT_TAG','AUDIT_EVENT')")).isEqualTo(18);
         assertThat(scalar(connection, "SELECT COUNT(*) FROM system_role")).isEqualTo(5);
         assertThat(scalar(connection, "SELECT COUNT(*) FROM user_objects WHERE object_type='TRIGGER' "
                 + "AND object_name IN ('TRG_VERSION_IMMUTABLE','TRG_FRAGMENT_IMMUTABLE','TRG_CHAT_MESSAGE_LENGTH') "

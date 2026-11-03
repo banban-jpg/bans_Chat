@@ -130,3 +130,31 @@ After installing Oracle 26ai Free, use a dedicated empty schema, inspect V001–
 | Session invalidation/account suspension against Oracle during active socket and attempted SEND/SUBSCRIBE/outbound delivery | BLOCKED: ORACLE_26AI_NOT_INSTALLED; Oracle-backed HTTP/STOMP IT NOT_RUN/incomplete. |
 
 After Oracle installation, review/apply the versioned Oracle migration and synthetic seed to a dedicated empty test schema; set `ORACLE_JDBC_URL`, `ORACLE_DB_USER`, `ORACLE_DB_PASSWORD`, and `ORACLE_CHAT_TEST=YES`, then run `.\oracleIntegrationTest.cmd` from `bans_chatbot`. This is an instruction, not a STEP 09 execution result. Multi-instance broker behavior needs separate architecture work; the current SimpleBroker is deliberately local-only.
+
+## STEP 10 document workflow (2026-11-03 KST)
+
+Every real DB result below remains **BLOCKED: ORACLE_26AI_NOT_INSTALLED**. Offline XML parsing, migration hashes, Mockito, MockMvc and synchronized fake concurrency are not Oracle execution.
+
+| Oracle-only check | State / executable condition |
+|---|---|
+| V004 reviewer column/FK and compatibility with V001–V003 migration/seed, metadata and existing immutable-published triggers | BLOCKED; apply only to a dedicated empty schema and inspect actual 26ai compile/constraints. |
+| Mapper create/CLOB/fragment/assignee/grant/revoke/audit mapping | `ManagedDocumentOracleIT.createsAndLocksDraftWithRollback` is compiled and opt-in with `ORACLE_DOCUMENT_TEST=YES`; BLOCKED, NOT_RUN. |
+| Two concurrent approvals for the same submitted version, self approval, grant revoked during review, row lock ordering, transaction rollback and audit atomicity | BLOCKED; multi-connection Oracle IT code NOT_RUN/incomplete. Fake two-thread PASS cannot substitute. |
+| Existing current published version while a new draft is submitted/rejected, immutable published body/fragment UPDATE rejection, FK and scope checks | BLOCKED; negative Oracle IT code NOT_RUN/incomplete. |
+| Fresh ACL read/search after status, department and grant changes, search pagination/plan, large CLOB performance, restart durability | BLOCKED; HTTP/Oracle IT and representative load NOT_RUN/incomplete. |
+
+After installing Oracle 26ai Free, review the V001–V004 SHA-256 manifest and explicitly apply `@db/oracle/apply.sql` to a dedicated empty schema; apply synthetic seed intentionally. Set `ORACLE_JDBC_URL`, `ORACLE_DB_USER`, `ORACLE_DB_PASSWORD`, and `ORACLE_DOCUMENT_TEST=YES` only for that migrated/seeded test schema. Run `.\oracleIntegrationTest.cmd` from `bans_chatbot`. Do not run the empty-schema opt-in against populated data. STEP 10 did not execute this command or any JDBC SQL.
+
+## STEP 11 Oracle search backlog (2026-11-03 KST)
+
+All entries are **BLOCKED: ORACLE_26AI_NOT_INSTALLED**; no real JDBC or SQL was executed. Offline XML parsing/manifest and local-mock search are not Oracle PASS.
+
+| Required Oracle check | Current implementation / next execution |
+|---|---|
+| V005 tag table/FK/indexes, V001–V005 ordered apply, 18-table metadata, generated 20-tag seed | Source and manifest tests PASS offline; real migration/seed BLOCKED. Review hashes, apply explicitly to a dedicated empty 26ai schema, then seed intentionally. |
+| Mapper current published version, active account/EMPLOYEE role, department/owner/live READ grant joins, `ai_searchable` and bound query | `DocumentSearchOracleIT` compiled and opt-in via `ORACLE_DOCUMENT_SEARCH_TEST=YES`; actual SELECT/source/revoke BLOCKED. Verify source ID belongs to current version and stale link becomes 404. |
+| Fragment CLOB substring/tag/title matching, Korean case/spacing, literal `%`/`_`/quote injection input, excerpt and page ordering | SQL-source parser and fake PASS only; SQL results and linguistic accuracy BLOCKED. Add representative 26ai data and compare plans/results. |
+| Tag/current-document B-tree indexes, large CLOB cost, Oracle Text/Korean analyzer availability | Execution plan and performance BLOCKED; Oracle Text choice intentionally NOT_RUN until official 26ai support review and measured analyzer experiment. B-tree does not prove CLOB substring acceleration. |
+| Concurrent grant revoke, department change, withdrawal/version publish versus search/source response; snapshot/lock consistency | Multi-connection Oracle IT and HTTP/Oracle tests NOT_RUN/incomplete; real race semantics BLOCKED. Current service rechecks before response but cannot cancel a response after that check. |
+
+After Oracle installation, use a disposable dedicated schema, review the V001–V005 manifest and run `@db/oracle/apply.sql`; separately run `@db/oracle/seed/apply_seed.sql`. Set `ORACLE_JDBC_URL`, `ORACLE_DB_USER`, `ORACLE_DB_PASSWORD`, `ORACLE_DOCUMENT_SEARCH_TEST=YES` and run `.\oracleIntegrationTest.cmd` from `bans_chatbot`. This command is an execution instruction only, **NOT_RUN** in STEP 11. No H2 or substitute search engine is authorized.

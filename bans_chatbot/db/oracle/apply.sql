@@ -7,5 +7,7 @@ WHENEVER SQLERROR EXIT SQL.SQLCODE
 @@V001__initial_schema.sql
 @@V002__indexes_guards_roles.sql
 @@V003__chat_message_length_guard.sql
+@@V004__document_reviewer_assignment.sql
+@@V005__document_search_tags_indexes.sql
 @@verify_schema.sql
 EXIT SUCCESS

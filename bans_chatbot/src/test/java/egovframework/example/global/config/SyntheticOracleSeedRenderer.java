@@ -69,6 +69,11 @@ public final class SyntheticOracleSeedRenderer {
                     "document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status",
                     "s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT'");
 
+            merge(sql, "document_tag", "t.document_id = s.document_id AND t.tag_value = s.tag_value",
+                    "SELECT d.document_id, " + q(document.category()) + " tag_value FROM document d WHERE d.document_code = "
+                            + q(document.documentCode()),
+                    "document_id, tag_value", "s.document_id, s.tag_value");
+
             String initialState = "PUBLISHED".equals(document.versionState()) ? "DRAFT" : document.versionState();
             merge(sql, "document_version", "t.document_id = s.document_id AND t.version_no = 1",
                     "SELECT d.document_id, e.employee_id creator_id, " + q(document.format())

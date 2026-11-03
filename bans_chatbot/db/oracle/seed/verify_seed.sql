@@ -1,4 +1,4 @@
--- Exact counts assume the dedicated schema contains only V001/V002 and this synthetic seed.
+-- Exact counts assume the dedicated V001-V005 schema contains only this synthetic seed.
 DECLARE
     v_count NUMBER;
 BEGIN
@@ -15,6 +15,8 @@ BEGIN
     IF v_count <> 20 THEN RAISE_APPLICATION_ERROR(-20075, 'SEED_VERSION_COUNT'); END IF;
     SELECT COUNT(*) INTO v_count FROM document_fragment;
     IF v_count <> 20 THEN RAISE_APPLICATION_ERROR(-20076, 'SEED_FRAGMENT_COUNT'); END IF;
+    SELECT COUNT(*) INTO v_count FROM document_tag;
+    IF v_count <> 20 THEN RAISE_APPLICATION_ERROR(-20080, 'SEED_TAG_COUNT'); END IF;
     SELECT COUNT(*) INTO v_count FROM document_review;
     IF v_count <> 18 THEN RAISE_APPLICATION_ERROR(-20077, 'SEED_REVIEW_COUNT'); END IF;
     SELECT COUNT(*) INTO v_count FROM document_fragment WHERE external_ai_allowed = 'Y'

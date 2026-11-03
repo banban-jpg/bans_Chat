@@ -282,6 +282,11 @@ MERGE INTO document t USING (
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
 
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'VACATION' tag_value FROM document d WHERE d.document_code = 'DOC-001'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
+
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'MARKDOWN' content_format, '# 가상 휴가 안내: 합성 직원은 예시 양식을 사용합니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-001' WHERE d.document_code = 'DOC-001'
 ) s ON (t.document_id = s.document_id AND t.version_no = 1)
@@ -310,6 +315,11 @@ MERGE INTO document t USING (
     SELECT 'DOC-002' document_code, '가상 출장 정산 절차' document_title, 'EXPENSE' document_category, e.employee_id owner_employee_id, (SELECT department_id FROM department WHERE department_code = 'D02') department_id, 'DEPARTMENT' document_scope FROM employee e WHERE e.employee_code = 'EMP-005'
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
+
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'EXPENSE' tag_value FROM document d WHERE d.document_code = 'DOC-002'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
 
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'MARKDOWN' content_format, '# 가상 정산: 합성 영수증 번호만 사용합니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-005' WHERE d.document_code = 'DOC-002'
@@ -350,6 +360,11 @@ MERGE INTO document t USING (
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
 
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'DEPLOYMENT' tag_value FROM document d WHERE d.document_code = 'DOC-003'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
+
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'MARKDOWN' content_format, '# 가상 배포: 테스트 환경만 점검합니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-008' WHERE d.document_code = 'DOC-003'
 ) s ON (t.document_id = s.document_id AND t.version_no = 1)
@@ -379,6 +394,11 @@ MERGE INTO document t USING (
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
 
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'EQUIPMENT' tag_value FROM document d WHERE d.document_code = 'DOC-004'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
+
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'TEXT' content_format, '가상 장비 신청은 예시 승인 절차를 따릅니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-018' WHERE d.document_code = 'DOC-004'
 ) s ON (t.document_id = s.document_id AND t.version_no = 1)
@@ -407,6 +427,11 @@ MERGE INTO document t USING (
     SELECT 'DOC-005' document_code, '가상 계약 검토 흐름' document_title, 'CONTRACT' document_category, e.employee_id owner_employee_id, (SELECT department_id FROM department WHERE department_code = 'D04') department_id, 'DEPARTMENT' document_scope FROM employee e WHERE e.employee_code = 'EMP-014'
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
+
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'CONTRACT' tag_value FROM document d WHERE d.document_code = 'DOC-005'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
 
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'MARKDOWN' content_format, '# 가상 계약: 실제 거래처 정보는 포함하지 않습니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-014' WHERE d.document_code = 'DOC-005'
@@ -442,6 +467,11 @@ MERGE INTO document t USING (
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
 
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'ONBOARDING' tag_value FROM document d WHERE d.document_code = 'DOC-006'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
+
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'MARKDOWN' content_format, '# 가상 온보딩: 예시 계정 신청 순서입니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-003' WHERE d.document_code = 'DOC-006'
 ) s ON (t.document_id = s.document_id AND t.version_no = 1)
@@ -470,6 +500,11 @@ MERGE INTO document t USING (
     SELECT 'DOC-007' document_code, '합성 보안 접근 규칙 예시' document_title, 'SECURITY' document_category, e.employee_id owner_employee_id, NULL department_id, 'PRIVATE' document_scope FROM employee e WHERE e.employee_code = 'EMP-011'
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
+
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'SECURITY' tag_value FROM document d WHERE d.document_code = 'DOC-007'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
 
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'TEXT' content_format, '가상 보안 문서입니다. 실제 비밀값은 존재하지 않습니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-011' WHERE d.document_code = 'DOC-007'
@@ -505,6 +540,11 @@ MERGE INTO document t USING (
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
 
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'VACATION' tag_value FROM document d WHERE d.document_code = 'DOC-008'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
+
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'TEXT' content_format, '가상 인사부의 연차 일정 예시입니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-004' WHERE d.document_code = 'DOC-008'
 ) s ON (t.document_id = s.document_id AND t.version_no = 1)
@@ -534,6 +574,11 @@ MERGE INTO document t USING (
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
 
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'EXPENSE' tag_value FROM document d WHERE d.document_code = 'DOC-009'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
+
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'TEXT' content_format, '가상 비용 코드는 예시 분류만 표시합니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-007' WHERE d.document_code = 'DOC-009'
 ) s ON (t.document_id = s.document_id AND t.version_no = 1)
@@ -562,6 +607,11 @@ MERGE INTO document t USING (
     SELECT 'DOC-010' document_code, '가상 내부 배포 메모' document_title, 'DEPLOYMENT' document_category, e.employee_id owner_employee_id, NULL department_id, 'PRIVATE' document_scope FROM employee e WHERE e.employee_code = 'EMP-013'
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
+
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'DEPLOYMENT' tag_value FROM document d WHERE d.document_code = 'DOC-010'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
 
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'MARKDOWN' content_format, '# 가상 배포 메모: 실제 서버 주소는 없습니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-013' WHERE d.document_code = 'DOC-010'
@@ -597,6 +647,11 @@ MERGE INTO document t USING (
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
 
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'EQUIPMENT' tag_value FROM document d WHERE d.document_code = 'DOC-011'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
+
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'TEXT' content_format, '가상 비품 반납은 예시 장부에 기록합니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-019' WHERE d.document_code = 'DOC-011'
 ) s ON (t.document_id = s.document_id AND t.version_no = 1)
@@ -630,6 +685,11 @@ MERGE INTO document t USING (
     SELECT 'DOC-012' document_code, '가상 영업 계약 초안 지침' document_title, 'CONTRACT' document_category, e.employee_id owner_employee_id, NULL department_id, 'PRIVATE' document_scope FROM employee e WHERE e.employee_code = 'EMP-015'
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
+
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'CONTRACT' tag_value FROM document d WHERE d.document_code = 'DOC-012'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
 
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'MARKDOWN' content_format, '# 가상 계약 초안: 실제 고객명은 없습니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-015' WHERE d.document_code = 'DOC-012'
@@ -665,6 +725,11 @@ MERGE INTO document t USING (
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
 
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'ONBOARDING' tag_value FROM document d WHERE d.document_code = 'DOC-013'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
+
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'TEXT' content_format, '가상 입사 첫날에는 예시 팀 소개를 읽습니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-002' WHERE d.document_code = 'DOC-013'
 ) s ON (t.document_id = s.document_id AND t.version_no = 1)
@@ -693,6 +758,11 @@ MERGE INTO document t USING (
     SELECT 'DOC-014' document_code, '합성 보안 점검 체크리스트' document_title, 'SECURITY' document_category, e.employee_id owner_employee_id, (SELECT department_id FROM department WHERE department_code = 'D03') department_id, 'DEPARTMENT' document_scope FROM employee e WHERE e.employee_code = 'EMP-011'
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
+
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'SECURITY' tag_value FROM document d WHERE d.document_code = 'DOC-014'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
 
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'MARKDOWN' content_format, '# 가상 보안 점검: 실제 취약점이나 키는 없습니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-011' WHERE d.document_code = 'DOC-014'
@@ -723,6 +793,11 @@ MERGE INTO document t USING (
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
 
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'VACATION' tag_value FROM document d WHERE d.document_code = 'DOC-015'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
+
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'TEXT' content_format, '가상 휴가 질문은 예시 답변을 참고합니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-003' WHERE d.document_code = 'DOC-015'
 ) s ON (t.document_id = s.document_id AND t.version_no = 1)
@@ -751,6 +826,11 @@ MERGE INTO document t USING (
     SELECT 'DOC-016' document_code, '가상 경비 증빙 예시' document_title, 'EXPENSE' document_category, e.employee_id owner_employee_id, NULL department_id, 'PRIVATE' document_scope FROM employee e WHERE e.employee_code = 'EMP-006'
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
+
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'EXPENSE' tag_value FROM document d WHERE d.document_code = 'DOC-016'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
 
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'TEXT' content_format, '가상 경비 증빙에는 합성 금액만 표시합니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-006' WHERE d.document_code = 'DOC-016'
@@ -786,6 +866,11 @@ MERGE INTO document t USING (
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
 
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'DEPLOYMENT' tag_value FROM document d WHERE d.document_code = 'DOC-017'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
+
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'MARKDOWN' content_format, '# 반려 예시: 합성 검토 의견을 반영해야 합니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-010' WHERE d.document_code = 'DOC-017'
 ) s ON (t.document_id = s.document_id AND t.version_no = 1)
@@ -812,6 +897,11 @@ MERGE INTO document t USING (
     SELECT 'DOC-018' document_code, '가상 계약 서식 반려안' document_title, 'CONTRACT' document_category, e.employee_id owner_employee_id, (SELECT department_id FROM department WHERE department_code = 'D04') department_id, 'DEPARTMENT' document_scope FROM employee e WHERE e.employee_code = 'EMP-016'
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
+
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'CONTRACT' tag_value FROM document d WHERE d.document_code = 'DOC-018'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
 
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'TEXT' content_format, '반려 예시 서식에는 실제 계약 내용이 없습니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-016' WHERE d.document_code = 'DOC-018'
@@ -845,6 +935,11 @@ MERGE INTO document t USING (
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
 
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'EQUIPMENT' tag_value FROM document d WHERE d.document_code = 'DOC-019'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
+
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'TEXT' content_format, '폐기된 합성 장비 안내 버전입니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-020' WHERE d.document_code = 'DOC-019'
 ) s ON (t.document_id = s.document_id AND t.version_no = 1)
@@ -861,6 +956,11 @@ MERGE INTO document t USING (
     SELECT 'DOC-020' document_code, '가상 구형 온보딩 안내 폐기본' document_title, 'ONBOARDING' document_category, e.employee_id owner_employee_id, NULL department_id, 'COMPANY' document_scope FROM employee e WHERE e.employee_code = 'EMP-004'
 ) s ON (t.document_code = s.document_code)
 WHEN NOT MATCHED THEN INSERT (document_code, document_title, document_category, owner_employee_id, department_id, document_scope, document_status) VALUES (s.document_code, s.document_title, s.document_category, s.owner_employee_id, s.department_id, s.document_scope, 'DRAFT');
+
+MERGE INTO document_tag t USING (
+    SELECT d.document_id, 'ONBOARDING' tag_value FROM document d WHERE d.document_code = 'DOC-020'
+) s ON (t.document_id = s.document_id AND t.tag_value = s.tag_value)
+WHEN NOT MATCHED THEN INSERT (document_id, tag_value) VALUES (s.document_id, s.tag_value);
 
 MERGE INTO document_version t USING (
     SELECT d.document_id, e.employee_id creator_id, 'TEXT' content_format, '폐기된 합성 온보딩 안내 버전입니다.' body_text FROM document d JOIN employee e ON e.employee_code = 'EMP-004' WHERE d.document_code = 'DOC-020'

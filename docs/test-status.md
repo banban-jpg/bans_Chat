@@ -240,3 +240,50 @@ Environment: Windows 11 PowerShell, Temurin Java 21.0.3, Maven Wrapper 3.9.6, eG
 | Browser UI/manual production deployment | **NOT_RUN**. The E2E used a real test STOMP client and embedded server, not a browser UI or Oracle-backed deployment. |
 
 STEP 09 file inventory: modified `bans_chatbot/pom.xml`, `auth`-agnostic `global/security/SecurityConfiguration.java`, `chat/service/ChatService.java`, and five relevant docs (`api-contract`, `decisions`, `handoff`, `test-status`, `oracle-validation-backlog`). Added `chat/websocket/ChatWebSocketConfiguration.java`, `ChatStompSecurity.java`, `ChatStompController.java` under the production domain and `chat/websocket/ChatStompE2ETest.java` under the mirrored test domain. Existing uncommitted STEP 08 files were not rewritten for STEP 09. No Oracle DDL/Mapper changed in this STEP.
+
+## STEP 10 verification (2026-11-03 KST)
+
+Environment: Windows 11 PowerShell, Temurin Java 21.0.3, Maven Wrapper 3.9.6, eGov parent 5.0.0 / Boot 3.5.6. At entry, `dev` had uncommitted STEP 08–09 files; those were preserved. Commands ran from `bans_chatbot` with the wrapper, `-o`, the existing ignored `.maven-repo`, and `MAVEN_HOME` set to the existing Maven 3.9.6 distribution. No Oracle connection/SQL, Gemini call, dependency retrieval or external network operation occurred.
+
+| Actual command/check | Status / evidence |
+|---|---|
+| `.\mvnw.cmd -o '-Dmaven.repo.local=C:\eGovFrameDev-5.0.2-Windows-64bit\workspace-egov\bans_Chat\.maven-repo' test-compile` | **PASS** 19:49:01 KST, 86 main and 34 then-current test Java sources. No tests executed by this goal. |
+| Same wrapper/cache with `'-Dtest=ManagedDocumentServiceTest,ManagedDocumentMapperSourceTest,OracleSchemaSourceTest' test` | **PASS** 19:50:11 KST, 9 selected tests. Offline lifecycle, ACL, source/manifest checks; no Oracle execution. |
+| Same wrapper/cache with `'-Dtest=ManagedDocumentMockMvcTest' test` | **PASS** 19:51:05 KST, 1 real Spring Security MockMvc test, session/CSRF/approval/grant revoke/XSS. |
+| First full `clean test package` | **FAIL** 19:52:09 KST, 64 tests, one failure in pre-existing STOMP E2E suspended-account outbound assertion. New document tests passed. The outbound interceptor checked STOMP command only; broker delivery can have `SimpMessageType.MESSAGE` without a STOMP command. |
+| Targeted `'-Dtest=ChatStompE2ETest' test` before fix compiled | **FAIL** 19:53:14 KST, reproduced suspended-account delivery issue. |
+| Same targeted test after checking Spring message type | **PASS** 19:54:02 KST, all 3 embedded-server STOMP tests, including suspended-account delivery block. This fixed a real STEP 09 security gap discovered by STEP 10's broader gate. |
+| Final full `clean test package` after fix | **PASS 19:54:44 KST**: 86 main/38 test sources; **64 tests, 0 failures/errors/skips**, Boot JAR repackaged. Ignored `bans_chatbot/step10-final-fixed.log` has the evidence. |
+| Ordinary `*OracleIT`/tag | **SKIPPED** by suite selection; real Oracle test **NOT_RUN**. New `ManagedDocumentOracleIT` compiles but needs explicit opt-in. |
+| V004 migration, document Mapper/lock/trigger/FK/audit rollback/concurrent approval on Oracle | **BLOCKED: ORACLE_26AI_NOT_INSTALLED**; no SQL execution. |
+| Real Gemini API | **SKIPPED**, 0 calls. External disclosure remains disabled for user-authored content. |
+
+New STEP 10 files: document `ManagedDocument` domain, `DocumentModels` DTO, `ManagedDocumentService`, `DocumentWorkspace` port, in-memory and Oracle adapters, `ManagedDocumentMapper` interface/XML, `ManagedDocumentController`, V004 reviewer migration, unit/MockMvc/Mapper-source/Oracle-IT tests. Updated Oracle apply/manifest/source/IT, MapperScan, STEP 09 STOMP outbound check, and relevant docs. No H2 or alternate persistent DB was added.
+
+Final `git diff --check` **PASS** after documentation synchronization (only Git LF/CRLF normalization warnings). The 64 selected Surefire tests exclude all Oracle-only cases; no Oracle or Gemini request ran.
+
+## STEP 11 verification (2026-11-03 KST)
+
+Environment: Windows PowerShell, Java 21.0.3, Maven Wrapper 3.9.6, eGov parent 5.0.0 / resolved Spring Boot 3.5.6. Commands ran in `bans_chatbot`, with `MAVEN_HOME` set to the existing Maven 3.9.6 wrapper distribution and `-o '-Dmaven.repo.local=C:\eGovFrameDev-5.0.2-Windows-64bit\workspace-egov\bans_Chat\.maven-repo'`. No dependency download, real Oracle connection/SQL or Gemini request occurred. The prior STEP 10 and older uncommitted work was preserved.
+
+| Actual command/check | Result / evidence |
+|---|---|
+| `.\mvnw.cmd -o ... test-compile` (before new test source) | **PASS 20:20:15 KST**; 91 main / 38 then-current test sources compiled, no tests executed. A preceding checksum helper in the same shell had **FAIL** because its relative path repeated `bans_chatbot`; it did not change the manifest. The corrected `Get-FileHash db/oracle/V005__document_search_tags_indexes.sql` then **PASS** and appended the exact V005 hash. |
+| `.\mvnw.cmd -o ... '-Dtest=DocumentSearchServiceTest,DocumentSearchMapperSourceTest,ManagedDocumentMockMvcTest,OracleSchemaSourceTest' test` | **PASS 20:22:16 KST**, 10 selected tests, 0 failures/errors/skips. Covers synthetic 휴가/배포, ACL/grant revoke, stale links, bounds/literal SQL-shaped input, real security MockMvc and offline XML/hash. |
+| First `.\mvnw.cmd -o ... clean test package` | **FAIL 20:23:35 KST**, 67 tests, one failure: `OracleSeedSourceTest` detected the manually appended V005 tag SQL differed from the canonical seed renderer. No package was produced by this run. |
+| Updated `SyntheticOracleSeedRenderer`, `.\mvnw.cmd -o ... test-compile`, then `java -cp 'target/test-classes;target/classes' ...SyntheticOracleSeedRenderer 'db/oracle/seed/S001__synthetic_company.sql'` | **PASS** around 20:24 KST. Regenerated the checked-in seed from the canonical fixture. Seed and V005 source only; no Oracle SQL executed. |
+| `.\mvnw.cmd -o ... clean test package` after generated seed | **PASS 20:25:10 KST**, 67 tests, 0 failures/errors/skips and Boot JAR. |
+| `.\mvnw.cmd -o ... '-Dtest=DocumentSearchServiceTest,ManagedDocumentMockMvcTest' test` after added bounds/401 assertions | **PASS 20:25:57 KST**, 3 selected tests, 0 failures/errors/skips. |
+| `.\mvnw.cmd -o ... clean test package` after local-mock context test | **PASS 20:28:37 KST**, **68 tests, 0 failures/errors/skips**, Boot JAR. Local-mock Spring context loaded synthetic search data; MockMvc exercised protected API routes. |
+| Final `.\mvnw.cmd -o ... clean test package` after retaining the prior published version during review | **PASS 20:30:16 KST**, **68 tests, 0 failures/errors/skips**, Boot JAR. `bans_chatbot/step11-final3.log` and Surefire reports contain the final evidence. Oracle SQL remains unexecuted. |
+| Ordinary Surefire `*OracleIT` | **SKIPPED** by suite selection. New `DocumentSearchOracleIT` compiled but was **NOT_RUN**; it requires explicit opt-in and real 26ai. |
+| V005 DDL/seed, Mapper JOIN/`DBMS_LOB.INSTR`, locks, plan/Korean analyzer, concurrent revoke on real Oracle | **BLOCKED: ORACLE_26AI_NOT_INSTALLED**. Source parsing and fake tests are not database execution. |
+| Real Gemini API | **SKIPPED**, 0 calls. Mock Gemini network test **NOT_RUN**; no AI endpoint added in STEP 11. |
+| Browser/manual local-mock deployment | **NOT_RUN**. Spring context/MockMvc tested, but no browser or separately deployed process was used. |
+| `git diff --check` | **PASS** after final docs update, exit 0; only Windows LF/CRLF normalization warnings. |
+
+### Follow-up live local-mock HTTP smoke (2026-11-03 20:50 KST)
+
+The first hidden `Start-Process` attempt was **BLOCKED by automatic approval review** (`blocked by policy`); no server was launched by that attempt. A foreground `java -jar target/bans_chatbot-1.0.0.jar --spring.profiles.active=local-mock --server.port=18081` then started successfully with a runtime-generated, temporary admin password outside the workspace. Actual localhost HTTP calls **PASS**: `/api/health` returned `UP`; CSRF/session login and `/api/auth/me` returned `EMP-001`; `GET /api/documents/search?q=휴가&page=0&size=10` returned two fixture hits; a returned fragment source link returned matching content; `q=배포` returned zero hits for D01 admin; `GET /api/documents/DOC-003/published` returned 404; anonymous search returned 401. The temporary password file was deleted and the exact server PID was stopped. This is a real local-mock HTTP result, not Oracle SQL or Gemini execution. Browser UI, mutating document workflow over live HTTP, and Oracle-backed HTTP remain **NOT_RUN** or **BLOCKED** as applicable.
+
+STEP 11 files: new domain search repository port, local-mock/Oracle adapters, `DocumentSearchService`, `DocumentSearchMapper` interface/XML and source/Oracle-IT/service/local-mock tests; modified document Controller/DTO/domain/workspace/Mapper/service/MockMvc tests; V005 migration, runner/manifest/metadata/source checks, canonical seed renderer/SQL/preflight/verification and relevant docs. No H2 or alternate DB was added. See `oracle-validation-backlog.md` for executable Oracle conditions and remaining races.
