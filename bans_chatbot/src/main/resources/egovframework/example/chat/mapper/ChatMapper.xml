@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.example.chat.mapper.ChatMapper">
+ <sql id="roomColumns">SELECT r.room_id AS roomId,l.employee_code AS low,h.employee_code AS high,r.last_room_seq AS lastRoomSeq FROM chat_room r JOIN employee l ON l.employee_id=r.employee_low_id JOIN employee h ON h.employee_id=r.employee_high_id</sql>
+ <select id="byPair" resultType="egovframework.example.chat.mapper.ChatMapper$RoomRow"><include refid="roomColumns"/> WHERE l.employee_code=#{low} AND h.employee_code=#{high}</select>
+ <select id="byId" resultType="egovframework.example.chat.mapper.ChatMapper$RoomRow"><include refid="roomColumns"/> WHERE r.room_id=#{id}</select>
+ <select id="lockRoom" resultType="egovframework.example.chat.mapper.ChatMapper$RoomRow"><include refid="roomColumns"/> WHERE r.room_id=#{id} FOR UPDATE OF r.last_room_seq</select>
+ <insert id="insertRoom">INSERT INTO chat_room (employee_low_id,employee_high_id) SELECT l.employee_id,h.employee_id FROM employee l CROSS JOIN employee h WHERE l.employee_code=#{low} AND h.employee_code=#{high} AND l.employee_id &lt; h.employee_id</insert>
+ <insert id="insertReadStates">INSERT INTO chat_read_state (room_id,employee_id,last_read_seq) SELECT r.room_id,r.employee_low_id,0 FROM chat_room r WHERE r.room_id=#{id} UNION ALL SELECT r.room_id,r.employee_high_id,0 FROM chat_room r WHERE r.room_id=#{id}</insert>
+ <select id="rooms" resultType="egovframework.example.chat.mapper.ChatMapper$SummaryRow">
+ SELECT r.room_id AS roomId,CASE WHEN l.employee_code=#{actor} THEN h.employee_code ELSE l.employee_code END AS otherEmployeeId,r.last_room_seq AS lastRoomSeq,s.last_read_seq AS lastReadSeq,
+ (SELECT COUNT(m.message_id) FROM chat_message m WHERE m.room_id=r.room_id AND m.room_seq &gt; s.last_read_seq AND m.sender_id &lt;&gt; s.employee_id) AS unreadCount
+ FROM chat_room r JOIN employee l ON l.employee_id=r.employee_low_id JOIN employee h ON h.employee_id=r.employee_high_id JOIN chat_read_state s ON s.room_id=r.room_id
+ WHERE s.employee_id=(SELECT employee_id FROM employee WHERE employee_code=#{actor})
+ ORDER BY (SELECT MAX(latest.created_at) FROM chat_message latest WHERE latest.room_id=r.room_id) DESC NULLS LAST,r.room_id DESC
+ </select>
+ <select id="messages" resultType="egovframework.example.chat.mapper.ChatMapper$MessageRow">
+ SELECT roomSeq,senderEmployeeId,content FROM (
+ SELECT m.room_seq AS roomSeq,e.employee_code AS senderEmployeeId,m.message_text AS content
+ FROM chat_message m JOIN employee e ON e.employee_id=m.sender_id
+ WHERE m.room_id=#{id} AND (#{before}=0 OR m.room_seq &lt; #{before})
+ ORDER BY m.room_seq DESC FETCH FIRST #{size} ROWS ONLY
+ ) ORDER BY roomSeq ASC
+ </select>
+ <select id="byRequest" resultType="egovframework.example.chat.mapper.ChatMapper$MessageRow">SELECT m.room_seq AS roomSeq,e.employee_code AS senderEmployeeId,m.message_text AS content FROM chat_message m JOIN employee e ON e.employee_id=m.sender_id WHERE e.employee_code=#{sender} AND m.client_request_id=#{key}</select>
+ <select id="requestRoom" resultType="long">SELECT m.room_id FROM chat_message m JOIN employee e ON e.employee_id=m.sender_id WHERE e.employee_code=#{sender} AND m.client_request_id=#{key}</select>
+ <update id="increment">UPDATE chat_room SET last_room_seq=last_room_seq+1 WHERE room_id=#{id}</update>
+ <insert id="insertMessage">INSERT INTO chat_message (room_id,room_seq,sender_id,client_request_id,message_text) SELECT #{id},#{seq},e.employee_id,#{key},#{content,jdbcType=CLOB} FROM employee e WHERE e.employee_code=#{sender}</insert>
+ <select id="lastRead" resultType="long">SELECT last_read_seq FROM chat_read_state WHERE room_id=#{id} AND employee_id=(SELECT employee_id FROM employee WHERE employee_code=#{actor})</select>
+ <update id="updateRead">UPDATE chat_read_state SET last_read_seq=GREATEST(last_read_seq,#{seq}),read_at=SYSTIMESTAMP WHERE room_id=#{id} AND employee_id=(SELECT employee_id FROM employee WHERE employee_code=#{actor})</update>
+</mapper>

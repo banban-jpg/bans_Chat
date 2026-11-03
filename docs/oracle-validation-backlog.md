@@ -103,3 +103,30 @@ All Oracle execution remains **BLOCKED: ORACLE_26AI_NOT_INSTALLED**. `Organizati
 | Real sort/index execution plans, substring-search performance and representative load | Oracle plans/load needed; no speculative tuning/index migration added. Separate count/list statements may observe concurrent changes under READ COMMITTED. | BLOCKED: ORACLE_26AI_NOT_INSTALLED; NOT_RUN |
 
 After installation, review/apply the existing migration and synthetic seed procedures to a dedicated empty Oracle 26ai schema. Set `ORACLE_JDBC_URL`, `ORACLE_DB_USER`, `ORACLE_DB_PASSWORD` and `ORACLE_ORGANIZATION_TEST=YES` only for that isolated migrated/seeded schema; from `bans_chatbot`, run `.\oracleIntegrationTest.cmd`. This explicit Failsafe command also selects other Oracle ITs with their own opt-ins. Do not set empty-schema migration/seed flags against a populated schema. STEP 07 did not execute this command or any JDBC SQL. Default Surefire excludes every `*OracleIT` and the `oracle-integration` tag.
+
+## STEP 08 chat Oracle backlog (2026-11-03 KST)
+
+All cases below are **BLOCKED: ORACLE_26AI_NOT_INSTALLED**. XML parsing, fake two-thread runs, migration hashes and JVM package are not SQL execution.
+
+| Oracle check | Status / next evidence |
+|---|---|
+| V003 trigger compiles and rejects empty, 2001 code points, accepts 2000 Unicode supplementary code points; CLOB binding and newline | BLOCKED; manual migration/negative Oracle IT needed. `REGEXP_COUNT` semantics must be compared with Java code points. |
+| Ordered pair UNIQUE reuse and initial two read-state rows | BLOCKED; `ChatOracleIT` has preliminary rollback case, two-connection race IT still NOT_RUN/incomplete. |
+| Room-row `FOR UPDATE`, atomic `last_room_seq`, sender/request uniqueness and differing-content conflict | BLOCKED; preliminary `ChatOracleIT` serial/rollback case exists; simultaneous two-connection stress IT NOT_RUN/incomplete. |
+| Descending cursor SQL with chronological response, latest-room ordering, unread count, monotonic read position | BLOCKED; preliminary `ChatOracleIT` covers part of this, further Oracle boundary/timestamp cases NOT_RUN/incomplete. |
+| Transaction rollback/commit, cross-room request reuse, restart durability, query plans/performance | BLOCKED; dedicated Oracle IT and restart process NOT_RUN/incomplete. |
+
+After installing Oracle 26ai Free, use a dedicated empty schema, inspect V001–V003 hashes and explicitly run `@db/oracle/apply.sql`; apply the synthetic seed separately. Set `ORACLE_JDBC_URL`, `ORACLE_DB_USER`, `ORACLE_DB_PASSWORD`, `ORACLE_CHAT_TEST=YES` only on that isolated migrated/seeded schema. From `bans_chatbot`, run `.\oracleIntegrationTest.cmd`. Never run destructive migration opt-ins against populated data. No Oracle command was run in STEP 08.
+
+## STEP 09 WebSocket/Oracle boundary (2026-11-03 KST)
+
+**BLOCKED: ORACLE_26AI_NOT_INSTALLED.** The real embedded-server STOMP E2E uses `test` profile and in-memory chat/account stores only. It proves no Oracle connection, commit, locking, queue durability or failover.
+
+| Planned Oracle check | Status |
+|---|---|
+| `ChatOracleIT` (existing explicit `ORACLE_CHAT_TEST=YES`) plus STOMP sender/recipient test against a dedicated migrated and seeded 26ai schema | BLOCKED: ORACLE_26AI_NOT_INSTALLED; STOMP+Oracle test code NOT_RUN/incomplete. |
+| Message commit succeeds before user queue event, rollback emits none, broker failure after commit recovered by REST cursor | BLOCKED: ORACLE_26AI_NOT_INSTALLED; fault-injection IT NOT_RUN/incomplete. |
+| Two-connection duplicate request, room sequence locking, read monotonicity and reconnect after process restart | BLOCKED: ORACLE_26AI_NOT_INSTALLED; multi-connection/restart IT NOT_RUN/incomplete. |
+| Session invalidation/account suspension against Oracle during active socket and attempted SEND/SUBSCRIBE/outbound delivery | BLOCKED: ORACLE_26AI_NOT_INSTALLED; Oracle-backed HTTP/STOMP IT NOT_RUN/incomplete. |
+
+After Oracle installation, review/apply the versioned Oracle migration and synthetic seed to a dedicated empty test schema; set `ORACLE_JDBC_URL`, `ORACLE_DB_USER`, `ORACLE_DB_PASSWORD`, and `ORACLE_CHAT_TEST=YES`, then run `.\oracleIntegrationTest.cmd` from `bans_chatbot`. This is an instruction, not a STEP 09 execution result. Multi-instance broker behavior needs separate architecture work; the current SimpleBroker is deliberately local-only.

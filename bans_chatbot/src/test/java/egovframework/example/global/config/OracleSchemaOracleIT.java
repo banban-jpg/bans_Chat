@@ -42,7 +42,7 @@ class OracleSchemaOracleIT {
                 "Set ORACLE_EMPTY_SCHEMA_MIGRATION_TEST=YES only for a disposable empty schema");
         try (Connection connection = dataSource.getConnection()) {
             assertThat(scalar(connection, "SELECT COUNT(*) FROM user_objects")).isZero();
-            for (String file : List.of("V001__initial_schema.sql", "V002__indexes_guards_roles.sql")) {
+            for (String file : List.of("V001__initial_schema.sql", "V002__indexes_guards_roles.sql", "V003__chat_message_length_guard.sql")) {
                 for (String statement : statements(Files.readAllLines(DIR.resolve(file), StandardCharsets.UTF_8))) {
                     try (Statement command = connection.createStatement()) {
                         command.execute(statement);
@@ -114,8 +114,8 @@ class OracleSchemaOracleIT {
                 + "'DOCUMENT_GRANT','DOCUMENT_FRAGMENT','AUDIT_EVENT')")).isEqualTo(17);
         assertThat(scalar(connection, "SELECT COUNT(*) FROM system_role")).isEqualTo(5);
         assertThat(scalar(connection, "SELECT COUNT(*) FROM user_objects WHERE object_type='TRIGGER' "
-                + "AND object_name IN ('TRG_VERSION_IMMUTABLE','TRG_FRAGMENT_IMMUTABLE') "
-                + "AND status='VALID'")).isEqualTo(2);
+                + "AND object_name IN ('TRG_VERSION_IMMUTABLE','TRG_FRAGMENT_IMMUTABLE','TRG_CHAT_MESSAGE_LENGTH') "
+                + "AND status='VALID'")).isEqualTo(3);
     }
 
     private int scalar(Connection connection, String sql) throws SQLException {

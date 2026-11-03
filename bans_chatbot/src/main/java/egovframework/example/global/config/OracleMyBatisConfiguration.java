@@ -11,7 +11,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 @Configuration(proxyBeanMethods = false)
 @Profile("oracle")
-@MapperScan({"egovframework.example.auth.mapper", "egovframework.example.organization.mapper", "egovframework.example.audit.mapper"})
+@MapperScan({"egovframework.example.auth.mapper", "egovframework.example.organization.mapper", "egovframework.example.audit.mapper", "egovframework.example.chat.mapper"})
 public class OracleMyBatisConfiguration {
     @Bean
     public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception {

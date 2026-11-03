@@ -12,9 +12,9 @@ BEGIN
         'DOCUMENT_FRAGMENT', 'AUDIT_EVENT');
     SELECT COUNT(*) INTO v_roles FROM system_role;
     SELECT COUNT(*) INTO v_triggers FROM user_objects
-        WHERE object_name IN ('TRG_VERSION_IMMUTABLE', 'TRG_FRAGMENT_IMMUTABLE')
+        WHERE object_name IN ('TRG_VERSION_IMMUTABLE', 'TRG_FRAGMENT_IMMUTABLE', 'TRG_CHAT_MESSAGE_LENGTH')
           AND object_type = 'TRIGGER' AND status = 'VALID';
-    IF v_tables <> 17 OR v_roles <> 5 OR v_triggers <> 2 THEN
+    IF v_tables <> 17 OR v_roles <> 5 OR v_triggers <> 3 THEN
         RAISE_APPLICATION_ERROR(-20051, 'MIGRATION_METADATA_MISMATCH');
     END IF;
 END;

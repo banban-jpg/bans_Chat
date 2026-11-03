@@ -196,3 +196,47 @@ STEP 07 file inventory (relative to repository root; separate from preserved STE
 Final synchronized `git diff --check`: **PASS**, exit 0 (only existing LF/CRLF normalization warnings). The organization Controller also labels local-mock responses `X-Demo-Data: SYNTHETIC_EPHEMERAL`; a final gate is rerun after this label addition.
 
 Final source gate after the local-mock synthetic-response label: same offline wrapper `clean test package` **PASS at 2026-11-03 18:36:46 KST**, 68 main / 29 test sources, **52 tests, 0 failures/errors/skips**, repackaged JAR. Ignored log: `step07-label-final.log`. This supersedes the earlier final timestamp for STEP 07. The label itself was not verified by a live HTTP run. Oracle execution remains **BLOCKED: ORACLE_26AI_NOT_INSTALLED**.
+
+## STEP 08 verification (2026-11-03 KST)
+
+Windows PowerShell, Temurin Java 21.0.3, Maven Wrapper 3.9.6, eGov parent 5.0.0 / Boot 3.5.6; offline workspace cache. Before changes `git status --short` was empty on `dev`. No Oracle connection, SQL execution, Gemini call, dependency download or live network test occurred.
+
+From `bans_chatbot`, with `MAVEN_HOME` set to the existing Maven 3.9.6 wrapper distribution: `.\mvnw.cmd -o '-Dmaven.repo.local=C:\eGovFrameDev-5.0.2-Windows-64bit\workspace-egov\bans_Chat\.maven-repo' clean test package`.
+
+| Check | Status / evidence |
+|---|---|
+| Initial `clean test` before new chat tests were created | **PASS**, 18:59:50 KST, 52 existing tests. A Python test-file creation command failed because it used a root-relative path while running in the module directory; no test was created by that command. Log `bans_chatbot/target-step08-test.log` is ignored. |
+| First `clean test package` with new tests | **FAIL**, 19:01:15 KST, 56 selected tests, one assertion failure. Test expected numeric HTTP status in `ApiException` message, while the exception exposes a public code. Production code did not cause the failure. |
+| Immediate rerun while test-file correction was made | **FAIL**, 19:01:56 KST, 56 tests, one same assertion failure because Maven had already compiled the old test before the edit. |
+| Final independent `clean test package` after test correction | **PASS**, 19:02:40 KST, 75 main/33 test sources, **56 tests, zero failures/errors/skips**, repackaged Boot JAR. Log `bans_chatbot/step08-verified.log` is ignored. Includes real security-chain MockMvc, service cursor/idempotency/read/ACL tests, fake two-thread race, Oracle XML/source/manifest checks. It does not execute Oracle. |
+| Default `*OracleIT` | **SKIPPED** by Surefire selection; Oracle execution **NOT_RUN**. New ChatOracleIT compiled only. |
+| Oracle V003, Mapper SELECT/INSERT/UPDATE, locking/uniqueness/concurrency/CLOB semantics | **BLOCKED: ORACLE_26AI_NOT_INSTALLED**. No actual SQL execution; see Oracle backlog. |
+| Real Gemini API | **SKIPPED**; 0 calls. Mock Gemini network test **NOT_RUN**, outside chat STEP. |
+| Live local-mock HTTP process | **NOT_RUN**. REST exercised through MockMvc, not a packaged process. |
+
+STEP 08 files: new `chat/controller/ChatController.java`, `chat/dto/ChatModels.java`, `chat/service/ChatService.java`, `chat/repository/{ChatRepository,InMemoryChatRepository,OracleChatRepository}.java`, `chat/mapper/ChatMapper.java` under `bans_chatbot/src/main/java/egovframework/example`; matching chat Mapper XML in resources; new V003 under `bans_chatbot/db/oracle`; tests `ChatMockMvcTest`, `ChatServiceTest`, `ChatMapperSourceTest`, `ChatOracleIT`. Updated MyBatis MapperScan, migration apply/verify/manifest, schema source/Oracle IT and five relevant docs plus database-design.md.
+
+After adding an offline V003 single-statement parser assertion, the same wrapper/cache command with `test` (without `clean package`) **PASS at 19:04:11 KST**: 56 tests, 0 failures/errors/skips, BUILD SUCCESS. This is the final test source state; the prior `clean test package` is the package evidence. Oracle validation is unchanged.
+
+## STEP 09 verification (2026-11-03 KST)
+
+Environment: Windows 11 PowerShell, Temurin Java 21.0.3, Maven Wrapper 3.9.6, eGov parent 5.0.0 / Boot 3.5.6. At STEP entry `dev` contained uncommitted STEP 08 migration/chat/source/docs changes, all preserved. Maven commands ran in `bans_chatbot` with `MAVEN_HOME` set to the existing wrapper distribution and `-o '-Dmaven.repo.local=C:\eGovFrameDev-5.0.2-Windows-64bit\workspace-egov\bans_Chat\.maven-repo'`. No dependency download, Oracle connection, Oracle SQL or Gemini request occurred. E2E's only network traffic was to its embedded local test server.
+
+| Executed command/check | Result / evidence |
+|---|---|
+| `.\mvnw.cmd -o ... test-compile` after declaring `spring-boot-starter-websocket` | **FAIL** 19:16:25: starter 3.5.6 not cached offline. Replaced with Boot-managed, already cached `spring-websocket` and `spring-messaging` modules. No version changed. |
+| Same `test-compile` after direct module declarations | **FAIL** 19:17:01: `ChatStompSecurity.current` accepted `StompHeaderAccessor` while handler injection supplied `SimpMessageHeaderAccessor`. Corrected parameter type. |
+| Same `test-compile` after type correction | **PASS** 19:17:29: 78 main/33 then-current test source files compiled. |
+| `.\mvnw.cmd -o ... test` before E2E source | **PASS** 19:17:51: 56 existing tests, zero failures/errors/skips. This did not exercise STOMP client traffic. |
+| `.\mvnw.cmd -o ... '-Dtest=ChatStompE2ETest' test` | **PASS** 19:18:47, 2 embedded-server STOMP tests (A/B/C queues and CSRF/Origin rejection). |
+| Same targeted test after outbound guard | **PASS** 19:19:48, 2 tests. |
+| Same targeted test after duplicate/logout extension | **FAIL** 19:20:20, 1 error: test cleanup called `disconnect()` on a socket already closed after logout; message isolation assertions had passed. Fixed test cleanup. |
+| `.\mvnw.cmd -o ... clean test package` after cleanup | **PASS** 19:21:22, 58 tests and Boot JAR. |
+| Final `.\mvnw.cmd -o ... clean test package` after account-suspension E2E addition | **PASS** **19:22:46 KST**: 78 main/34 test sources, **59 tests, 0 failures, 0 errors, 0 skips**, Boot JAR repackaged. Three tests used the real embedded Tomcat/WebSocket server with process-local `test` repositories; no Oracle. Ignored log `bans_chatbot/step09-final2.log` and Surefire reports record the result. Surefire did not rerun identical tests during the package phase. |
+| `git diff --check` | **PASS** after docs synchronization; only line-ending normalization warnings. |
+| Ordinary Surefire `*OracleIT` | **SKIPPED** by suite selection; Oracle execution **NOT_RUN**. |
+| Real Oracle 26ai commit/event order, persistence, locks, broker fault recovery | **BLOCKED: ORACLE_26AI_NOT_INSTALLED**; no JDBC or SQL execution. |
+| Real Gemini API | **SKIPPED**; 0 calls. Mock Gemini network test **NOT_RUN**, outside chat scope. |
+| Browser UI/manual production deployment | **NOT_RUN**. The E2E used a real test STOMP client and embedded server, not a browser UI or Oracle-backed deployment. |
+
+STEP 09 file inventory: modified `bans_chatbot/pom.xml`, `auth`-agnostic `global/security/SecurityConfiguration.java`, `chat/service/ChatService.java`, and five relevant docs (`api-contract`, `decisions`, `handoff`, `test-status`, `oracle-validation-backlog`). Added `chat/websocket/ChatWebSocketConfiguration.java`, `ChatStompSecurity.java`, `ChatStompController.java` under the production domain and `chat/websocket/ChatStompE2ETest.java` under the mirrored test domain. Existing uncommitted STEP 08 files were not rewritten for STEP 09. No Oracle DDL/Mapper changed in this STEP.

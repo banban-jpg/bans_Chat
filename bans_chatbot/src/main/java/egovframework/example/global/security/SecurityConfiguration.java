@@ -46,9 +46,16 @@ public class SecurityConfiguration {
     }
 
     @Bean
+    public HttpSessionCsrfTokenRepository sessionCsrfTokens() {
+        var tokens = new HttpSessionCsrfTokenRepository();
+        tokens.setSessionAttributeName("BANS_CSRF_TOKEN");
+        return tokens;
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, AccountRepository accounts,
-                                                   SecurityContextRepository contexts, ObjectMapper json) throws Exception {
-        var csrfTokens = new HttpSessionCsrfTokenRepository();
+                                                   SecurityContextRepository contexts, ObjectMapper json,
+                                                   HttpSessionCsrfTokenRepository csrfTokens) throws Exception {
         http.csrf(csrf -> csrf.csrfTokenRepository(csrfTokens)
                 .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()));
         http.securityContext(context -> context.securityContextRepository(contexts));

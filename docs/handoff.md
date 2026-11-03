@@ -136,3 +136,19 @@ Next STEP may proceed after the DB-free gate; it must continue to use refreshed 
 Final STEP 07 `clean test package` **PASS at 18:34:26 KST**: 68 main/29 test sources, 52 selected tests, zero failures/errors/skips, repackaged Boot JAR. One intermediate new-test fixture-ID error was corrected (EMP-003 has no account; EMP-010 does). Optional packaged live localhost smoke was **NOT_RUN** because automatic approval review rejected its command with `blocked by policy`; no STEP 07 live startup result is claimed. Oracle remains **BLOCKED: ORACLE_26AI_NOT_INSTALLED**.
 
 Final source gate after the local-mock synthetic-response label: same offline wrapper `clean test package` **PASS at 2026-11-03 18:36:46 KST**, 68 main / 29 test sources, **52 tests, 0 failures/errors/skips**, repackaged JAR. Ignored log: `step07-label-final.log`. This supersedes the earlier final timestamp for STEP 07. The label itself was not verified by a live HTTP run. Oracle execution remains **BLOCKED: ORACLE_26AI_NOT_INSTALLED**.
+
+## STEP 08 handoff (2026-11-03 KST)
+
+Added five chat REST routes, common ChatService entry point for later STOMP, domain repository port, synchronized local-mock adapter, Oracle MyBatis adapter and XML. V003 adds a CLOB code-point guard and was added to the ordered manual migration runner, manifest, metadata check and offline source tests. Default test/local-mock remains DB-free; oracle requires configured real Oracle and never falls back to memory. The prior chat participant policy is reused. All Oracle lock, uniqueness, trigger, CLOB mapping, cross-connection concurrency and restart claims remain **BLOCKED: ORACLE_26AI_NOT_INSTALLED**. REST does not provide real-time push; a later STEP must bind STOMP authentication and reuse ChatService.
+
+The next STEP may proceed after the DB-free test gate. Preserve room ID/sequence and sender request-key contract. Oracle installation must be followed by deliberate migration application to a dedicated empty schema and explicit `oracleIntegrationTest.cmd`; `ORACLE_CHAT_TEST=YES` enables the preliminary chat IT. See test-status and Oracle backlog for precise results and missing cases.
+
+Final STEP 08 source verification after V003 parser assertion: offline wrapper `test` **PASS at 19:04:11 KST**, 56 selected tests, zero failures/errors/skips. Earlier `clean test package` **PASS at 19:02:40 KST** created the JAR before this test-only assertion. No Oracle SQL or Gemini call occurred.
+
+## STEP 09 handoff (2026-11-03 KST)
+
+Added Spring WebSocket/STOMP endpoint `/ws/chat`, inbound handshake/session/account/CSRF/destination checks, outbound session/account checks, three user queues, `chat.send`/`chat.read` handlers that reuse STEP 08 ChatService, and a 3-person real embedded-server STOMP test. Existing STEP 08 uncommitted files and Oracle SQL were preserved. The local-mock/test store remains ephemeral; no real Gemini or Oracle call occurred.
+
+The next STEP can add a simple browser UI using the documented CSRF CONNECT, sender ack and REST cursor recovery contract. It must deduplicate by room/sequence and treat the current process SimpleBroker as single-server only. Oracle persistence, commit-to-event guarantee under database faults, multi-instance user routing and durable fanout remain blocked or later work. The exact test results and status distinctions are in `test-status.md`; Oracle follow-up is in `oracle-validation-backlog.md`.
+
+Final STEP 09 offline `clean test package` **PASS at 19:22:46 KST**: 78 main/34 test sources, 59 selected tests, 0 failures/errors/skips, Boot JAR. Embedded Tomcat/WebSocket E2E covered three accounts, CSRF/Origin, private delivery/ack, outsider rejection, duplicate request, reconnect REST recovery, logout and suspension outbound blocking. The user should still treat Oracle integration and broker fault recovery as BLOCKED/NOT_RUN per `oracle-validation-backlog.md`.

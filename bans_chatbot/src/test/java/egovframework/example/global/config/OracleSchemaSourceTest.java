@@ -27,7 +27,7 @@ class OracleSchemaSourceTest {
     void versionsAreOrderedAndAllSeventeenTablesExist() throws IOException {
         var scripts = migrationFiles();
         assertThat(scripts).extracting(path -> path.getFileName().toString())
-                .containsExactly("V001__initial_schema.sql", "V002__indexes_guards_roles.sql");
+                .containsExactly("V001__initial_schema.sql", "V002__indexes_guards_roles.sql", "V003__chat_message_length_guard.sql");
         var versions = new HashSet<String>();
         for (Path script : scripts) {
             var matcher = VERSION.matcher(script.getFileName().toString());
@@ -94,9 +94,9 @@ class OracleSchemaSourceTest {
         String preflight = Files.readString(DIR.resolve("verify_empty.sql"), StandardCharsets.UTF_8);
         String verification = Files.readString(DIR.resolve("verify_schema.sql"), StandardCharsets.UTF_8);
         assertThat(apply).contains("WHENEVER SQLERROR EXIT SQL.SQLCODE", "@@verify_empty.sql",
-                "@@V001__initial_schema.sql", "@@V002__indexes_guards_roles.sql", "@@verify_schema.sql");
+                "@@V001__initial_schema.sql", "@@V002__indexes_guards_roles.sql", "@@V003__chat_message_length_guard.sql", "@@verify_schema.sql");
         assertThat(preflight).contains("FROM user_objects", "MIGRATION_REQUIRES_EMPTY_SCHEMA");
-        assertThat(verification).contains("v_tables <> 17", "v_roles <> 5", "v_triggers <> 2");
+        assertThat(verification).contains("v_tables <> 17", "v_roles <> 5", "v_triggers <> 3");
     }
 
     @Test
@@ -109,6 +109,10 @@ class OracleSchemaSourceTest {
         assertThat(first).anySatisfy(sql ->
                 assertThat(sql).startsWith("ALTER TABLE document ADD CONSTRAINT fk_doc_current_version"));
         assertThat(second).hasSize(26);
+        var third = OracleSchemaOracleIT.statements(
+                Files.readAllLines(DIR.resolve("V003__chat_message_length_guard.sql"), StandardCharsets.UTF_8));
+        assertThat(third).hasSize(1).allSatisfy(sql -> assertThat(sql)
+                .startsWith("CREATE OR REPLACE TRIGGER").endsWith("END;"));
         assertThat(second).filteredOn(sql -> sql.startsWith("CREATE OR REPLACE TRIGGER"))
                 .hasSize(2).allSatisfy(sql -> assertThat(sql).endsWith("END;"));
     }
