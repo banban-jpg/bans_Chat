@@ -18,7 +18,7 @@ public class InMemoryDocumentSearchRepository implements DocumentSearchRepositor
     "INTERNAL".equals(d.scope)||"DEPARTMENT".equals(d.scope)&&Objects.equals(d.department,actor.departmentCode()));
  }
  private FragmentRow row(ManagedDocument d){var v=d.current();return new FragmentRow(d.id,d.code,v.id(),v.id(),d.title,v.body(),
-   java.time.Instant.parse("2026-01-01T00:00:00Z").plusSeconds(v.id()).toString());}
+   java.time.Instant.parse("2026-01-01T00:00:00Z").plusSeconds(v.id()).toString(),v.externalAllowed()?"Y":"N",v.synthetic()?"Y":"N",v.nonSensitive()?"Y":"N");}
  public List<FragmentRow> find(SessionActor actor,String query,int offset,int limit){
   return workspace.all().stream().filter(d->readable(actor,d))
    .filter(d->d.title.contains(query)||d.category.contains(query)||d.tags.stream().anyMatch(t->t.contains(query))||d.current().body().contains(query))

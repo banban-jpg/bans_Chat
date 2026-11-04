@@ -1,21 +1,43 @@
-# IDE and workspace state
+# 개발 도구와 작업 공간의 로컬 상태
 /.metadata/
 .idea/
 *.iml
 .vscode/
 .factorypath
 
-# Maven build output
+# Maven 빌드 결과와 로컬 의존성 캐시
 **/target/
 /.maven-repo/
 
-# Logs and runtime files
+# 실행 로그와 임시 파일, JVM 진단 자료
 *.log
 logs/
 *.pid
 **/javac.*.args
+*.hprof
+*.jfr
 
-# Local environment and secrets
+# 단계별 메모와 문제 해결 자료는 이 폴더에 모아 로컬에서만 관리
+/bans_chatbot/local-notes/
+
+# 그 밖의 개인 메모와 일회성 작업 자료
+# 공용 docs/handoff.md, 설계 결정, API 계약, 검증 기록은 Git으로 계속 관리
+/notes/local/
+/docs/local/
+/scratch/
+/.scratch/
+*.local.md
+*.local.txt
+
+# 편집기 백업과 병합 과정에서 생긴 임시 파일
+*~
+*.swp
+*.swo
+*.bak
+*.orig
+*.rej
+
+# 로컬 환경 설정과 비밀 정보
 .env
 .env.*
 !.env.example
@@ -23,14 +45,21 @@ logs/
 **/application-local.properties
 **/application-local.yml
 **/application-local.yaml
-**/*secret*
-**/*credential*
-**/*credentials*
+# CredentialStatus.java 같은 소스가 제외되지 않도록 비밀 파일과 폴더만 지정
+secret/
+secrets/
+credentials/
+secret.*
+secrets.*
+credentials.*
+*-secret.*
+*-secrets.*
+*-credentials.*
 **/*private-key*
 **/*.pem
 **/*.key
 
-# OS-generated files
+# 운영체제가 자동으로 생성하는 파일
 .DS_Store
 Thumbs.db
 desktop.ini

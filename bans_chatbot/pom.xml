@@ -146,8 +146,8 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.5.2</version>
 				<configuration>
-					<excludes><exclude>**/*OracleIT.java</exclude></excludes>
-					<excludedGroups>oracle-integration</excludedGroups>
+					<excludes><exclude>**/*OracleIT.java</exclude><exclude>**/*LiveSmokeIT.java</exclude></excludes>
+					<excludedGroups>oracle-integration | gemini-live</excludedGroups>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -179,6 +179,21 @@
 		</plugins>
 	</build>
 	<profiles>
+		<profile>
+			<id>gemini-smoke</id>
+			<build><plugins><plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.5.2</version>
+				<configuration>
+					<includes combine.self="override"><include>**/GeminiLiveSmokeIT.java</include></includes>
+					<excludes combine.self="override"><exclude>**/*OracleIT.java</exclude></excludes>
+					<groups>gemini-live</groups>
+					<excludedGroups combine.self="override">oracle-integration</excludedGroups>
+					<systemPropertyVariables><bans.gemini.smoke>YES</bans.gemini.smoke></systemPropertyVariables>
+				</configuration>
+			</plugin></plugins></build>
+		</profile>
 		<profile>
 			<id>oracle</id>
 			<dependencies>

@@ -23,7 +23,7 @@ public class InMemoryDocumentWorkspace implements DocumentWorkspace {
    var scope=switch(row.scope()){case COMPANY->"INTERNAL";case PRIVATE->"SELECTED";default->"DEPARTMENT";};
    var d=new ManagedDocument(nextId++,row.documentCode(),row.title(),row.category(),row.ownerCode(),scope,row.departmentCode());
    d.status=row.documentStatus();d.tags.add(row.category());
-   var state=row.versionState();var v=new ManagedDocument.Version(nextVersion++,1,row.format(),row.body(),state,row.aiSearchable(),row.externalAiAllowed());
+   var state=row.versionState();var v=new ManagedDocument.Version(nextVersion++,1,row.format(),row.body(),state,row.aiSearchable(),row.externalAiAllowed(),row.synthetic(),row.nonSensitive());
    d.versions.add(v);if("PUBLISHED".equals(state))d.currentVersionId=v.id();
    row.readGrants().forEach(id->d.grants.computeIfAbsent(id,k->new HashSet<>()).add("READ"));
    row.approveGrants().forEach(id->d.grants.computeIfAbsent(id,k->new HashSet<>()).add("APPROVE"));

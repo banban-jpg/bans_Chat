@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="egovframework.example.audit.mapper.AiQuestionAuditMapper">
+ <insert id="insert">
+  INSERT INTO audit_event (actor_employee_id,event_code,resource_type,resource_id,outcome_code)
+  VALUES ((SELECT employee_id FROM employee WHERE employee_code=#{actorEmployeeCode,jdbcType=VARCHAR}),
+          'AI_QUESTION','AI_QUESTION',#{resourceSummary},#{outcome})
+ </insert>
+</mapper>

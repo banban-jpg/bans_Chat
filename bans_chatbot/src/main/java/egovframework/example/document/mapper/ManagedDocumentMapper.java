@@ -3,7 +3,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 public interface ManagedDocumentMapper {
  record DocumentRow(long id,String code,String title,String category,String owner,String scope,String department,String status,Long currentVersionId,String reviewer) {}
- record VersionRow(long id,int number,String format,String body,String state,String aiSearchable,String externalAllowed) {}
+ record VersionRow(long id,int number,String format,String body,String state,String aiSearchable,String externalAllowed,String synthetic,String nonSensitive) {}
  record GrantRow(String employeeCode,String permission) {}
  DocumentRow find(@Param("code") String code);
  DocumentRow lock(@Param("code") String code);

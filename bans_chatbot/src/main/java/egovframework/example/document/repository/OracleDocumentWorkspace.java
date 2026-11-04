@@ -18,7 +18,7 @@ public class OracleDocumentWorkspace implements DocumentWorkspace {
   if(row==null)return null;
   var d=new ManagedDocument(row.id(),row.code(),row.title(),row.category(),row.owner(),apiScope(row.scope()),row.department());
   d.status=row.status();d.reviewer=row.reviewer();d.currentVersionId=row.currentVersionId()==null?0:row.currentVersionId();
-  for(var v:mapper.versions(d.id))d.versions.add(new ManagedDocument.Version(v.id(),v.number(),v.format(),v.body(),v.state(),"Y".equals(v.aiSearchable()),"Y".equals(v.externalAllowed())));
+  for(var v:mapper.versions(d.id))d.versions.add(new ManagedDocument.Version(v.id(),v.number(),v.format(),v.body(),v.state(),"Y".equals(v.aiSearchable()),"Y".equals(v.externalAllowed()),"Y".equals(v.synthetic()),"Y".equals(v.nonSensitive())));
   for(var grant:mapper.grants(d.id))d.grants.computeIfAbsent(grant.employeeCode(),k->new HashSet<>()).add(grant.permission());
   d.tags.addAll(mapper.tags(d.id));
   return d;

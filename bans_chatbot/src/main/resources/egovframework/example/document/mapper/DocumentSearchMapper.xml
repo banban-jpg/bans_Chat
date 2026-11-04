@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="egovframework.example.document.mapper.DocumentSearchMapper">
- <sql id="columns">SELECT d.document_id AS documentId,d.document_code AS documentCode,v.version_id AS versionId,f.fragment_id AS fragmentId,d.document_title AS title,f.body_text AS body,TO_CHAR(d.updated_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.FF3"Z"') AS updatedAt</sql>
+ <sql id="columns">SELECT d.document_id AS documentId,d.document_code AS documentCode,v.version_id AS versionId,f.fragment_id AS fragmentId,d.document_title AS title,f.body_text AS body,TO_CHAR(d.updated_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.FF3"Z"') AS updatedAt,f.external_ai_allowed AS externalAllowed,f.synthetic_yn AS synthetic,f.non_sensitive_yn AS nonSensitive</sql>
  <sql id="authorizedFrom">
   FROM document_fragment f
   JOIN document_version v ON v.version_id=f.version_id AND v.version_state='PUBLISHED'

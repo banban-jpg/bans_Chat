@@ -158,3 +158,75 @@ All entries are **BLOCKED: ORACLE_26AI_NOT_INSTALLED**; no real JDBC or SQL was 
 | Concurrent grant revoke, department change, withdrawal/version publish versus search/source response; snapshot/lock consistency | Multi-connection Oracle IT and HTTP/Oracle tests NOT_RUN/incomplete; real race semantics BLOCKED. Current service rechecks before response but cannot cancel a response after that check. |
 
 After Oracle installation, use a disposable dedicated schema, review the V001–V005 manifest and run `@db/oracle/apply.sql`; separately run `@db/oracle/seed/apply_seed.sql`. Set `ORACLE_JDBC_URL`, `ORACLE_DB_USER`, `ORACLE_DB_PASSWORD`, `ORACLE_DOCUMENT_SEARCH_TEST=YES` and run `.\oracleIntegrationTest.cmd` from `bans_chatbot`. This command is an execution instruction only, **NOT_RUN** in STEP 11. No H2 or substitute search engine is authorized.
+
+## STEP 12 DB-independent provider boundary (2026-11-04 KST)
+
+No table, migration, MyBatis statement or DB access was added or changed. Oracle AI Database 26ai Free remains the final persistent database. All existing V001–V005/seed/Mapper/ACL/lock/transaction/restart/performance cases above remain **BLOCKED: ORACLE_26AI_NOT_INSTALLED**. STEP 12's passing loopback HTTP and Java policy tests do not change any Oracle result. Existing eight `*OracleIT` classes remain compiled and excluded from normal Surefire; no extra artificial DB test was added for this DB-independent contract.
+
+| Pending check | Execution condition / status |
+|---|---|
+| Existing connection/schema/seed/auth/organization/chat/document/search Oracle IT | Dedicated installed 26ai schema, intentional migration/seed, existing per-suite opt-ins; `oracleIntegrationTest.cmd`. **BLOCKED: ORACLE_26AI_NOT_INSTALLED**, NOT_RUN. |
+| Oracle profile still fails without DB and never substitutes a mock DB | Existing DataSource/profile guards retained. No live Oracle startup/connection attempted in STEP 12. Oracle execution remains BLOCKED. Provider selection in an isolated AI-only context is not an Oracle context boot. |
+| Future document-to-provider RBAC+ACL, current version, revoked grants and fragment external permission | Must be implemented through current authorization/read services before accepting document input. DB-backed cross-transaction revoke/read/outbound tests are **NOT_RUN / not implemented**, and DB execution is BLOCKED. No document text was sent in STEP 12. |
+| Absence of AI conversation/key persistence | STEP 12 contains no repository or SQL and writes no AI transcript; source plus mock tests only. Actual database inspection remains BLOCKED; existing schema has no AI transcript table. |
+
+After Oracle installation and the previously documented dedicated-schema preparation, run from `bans_chatbot`:
+
+```powershell
+.\oracleIntegrationTest.cmd
+```
+
+This remains an **unexecuted procedure**, not a PASS result. Leave `bans.ai.provider=mock`; `oracle-it` explicitly rejects live Gemini selection. `gemini-smoke` is a separate opt-in task and must not be combined with Oracle verification. Normal STEP 12 tests made zero Oracle connections and zero real Gemini requests.
+
+## STEP 13 tool ACL/classification/audit Oracle boundary (2026-11-04 KST)
+
+Every real DB item below remains **BLOCKED: ORACLE_26AI_NOT_INSTALLED**. Java/MockMvc/Mockito/XML tests PASS, but no JDBC SQL/transaction was executed. Existing V001–V005, seed SQL and manifest are unchanged. New audit XML uses the existing audit_event table; document search/workspace XML now SELECT existing external_ai_allowed/synthetic_yn/non_sensitive_yn columns. No new DDL or substitute database exists.
+
+| Required Oracle check | Available code / remaining work |
+|---|---|
+| Current actor account/EMPLOYEE role, department and credential-version refresh for each tool | Existing auth/organization joins reused. Oracle-backed HTTP/session/tool integration is **BLOCKED / NOT_RUN**, including concurrent role/status/department changes. |
+| Current approved/PUBLISHED version, live ACL JOIN, exact fragment and classification mappings | New `ai.tool.AiToolOracleIT` is tagged and compiled. With ORACLE_AI_TOOL_TEST=YES it reads seeded external-allowed vacation evidence and denies internally readable external=N evidence through the domain service. Actual 26ai constructor/JDBC/flag mapping is **BLOCKED / NOT_RUN**. |
+| Metadata audit INSERT/counts, nullable actor VARCHAR binding and rollback | Same IT exercises the new mapper inside a test transaction and rolls back. Actual INSERT/null binding is **BLOCKED / NOT_RUN**; add null-actor/constraint negative cases. |
+| Independent audit REQUIRES_NEW commit, audit database failure and denied-read outcome | Production adapter exists; separate cross-connection and fault-injection IT is **NOT_RUN / not implemented**, DB execution BLOCKED. Current IT's outer rollback is not a REQUIRES_NEW verification. |
+| Revoke/withdraw/new publication/classification/account status during multi-tool final read and outbound handoff | Multi-connection Oracle/HTTP IT **NOT_RUN / not implemented**. Deterministic memory tests cover changes before rechecks only. A change after the last recheck remains a race; reads are not claimed to share an Oracle snapshot. |
+| CLOB/version-load cost, bounded search/filter underfill, plans, concurrent reads, pool/lock timeouts | Representative Oracle load/plan tests **BLOCKED / NOT_RUN**. No measured performance or durability claim. |
+| Prior migration/seed/constraint/trigger/chat/auth/directory/document suites | Remain blocked under their existing execution conditions above. STEP 13 adds no new migration. |
+
+Unexecuted command after Oracle 26ai Free installation, intentional dedicated-schema V001–V005 migration/seed and secure Oracle environment configuration:
+
+```powershell
+# From bans_chatbot, only on an isolated migrated/seeded synthetic Oracle test schema.
+$env:ORACLE_AI_TOOL_TEST = 'YES'
+.\oracleIntegrationTest.cmd
+```
+
+The existing runner selects Oracle Failsafe tests; other domain tests retain their own explicit opt-ins. Do not enable empty-schema migration/seed flags against populated data. Keep AI provider Mock and do not combine gemini-live/gemini-smoke with Oracle IT. Normal test/local-mock still have no DataSource/MyBatis auto-start and no mock DB fallback in oracle. Nine Oracle IT classes are now compiled/excluded from ordinary tests. The new server audit is not a model-accessible write tool, and no question/answer/document/tool argument/key is persisted.
+
+## STEP 14 question/evidence Oracle backlog (2026-11-04 KST)
+
+All real Oracle checks remain **BLOCKED: ORACLE_26AI_NOT_INSTALLED**. Final offline build PASS: 196 selected tests, 2026-11-04 16:22:38 KST; this proves no Oracle SQL execution. No DDL/migration/seed/manifest or DB technology changed. Organization/document reads reuse STEP 07/11/13 ports/Mappers; the only additional SQL is the fixed metadata INSERT into existing audit_event in AiQuestionAuditMapper.xml. No AI transcript table is added.
+
+| Pending Oracle check | Code / execution condition / limitation |
+|---|---|
+| Seeded vacation DOCUMENT and expense-owner STRUCTURED through Oracle services + Mock Provider | New `ai.question.AiQuestionOracleIT`, tagged oracle-integration and ORACLE_AI_QUESTION_TEST=YES. It activates EMP-002 only inside a rollback test transaction, queries existing services, invokes Mock and tests direct audit mapper insert. Compiled, **BLOCKED / NOT_RUN**. |
+| Exact expected facts/source IDs, non-exportable source and absent/ambiguous/retired/cross-department rows | Existing service assertions cover memory behavior. Broader Oracle seed/negative/HTTP assertions are **NOT_RUN / not implemented**, DB execution BLOCKED. Current IT only asserts non-UNANSWERABLE for its two baseline queries. |
+| Actual organization/document ACL JOIN, current version/classification constructor mapping, CLOB and Oracle predicates | Reused Mapper XML requires actual Oracle execution. **BLOCKED / NOT_RUN**; XML bind/source tests do not establish compatibility. |
+| Question audit enum/count-summary INSERT, nullable VARCHAR actor, constraints and no transcript storage | Baseline direct mapper insert code exists; actual INSERT, DB inspection/null-actor/negative cases **BLOCKED / NOT_RUN**. No raw text field exists in new Java event or INSERT. |
+| Production REQUIRES_NEW audit durability / audit failure / rollback independence | Separate two-connection fault-injection IT **NOT_RUN / not implemented**. Baseline test deliberately calls direct mapper within outer rollback and does not validate production independent commit. |
+| Grant revoke/account-role-department change/publication switch between search, outbound and final response | Multi-connection Oracle + HTTP timing tests **NOT_RUN / not implemented**, execution BLOCKED. Memory/Mockito deterministic rechecks passed; no atomic authorization snapshot or no-race guarantee after final check. |
+| Bounded read/query/pool/lock/audit latency, CLOB load, plans and concurrent STOMP behavior | Representative Oracle performance/failure suite **BLOCKED / NOT_RUN**. Ten-second Java stage/HTTP limits cannot interrupt an already blocked JDBC/audit operation. |
+| Oracle + actual Gemini E2E | **NOT_RUN**, independent explicit API authorization/Free-tier/model review required; never enable Gemini in oracle-it. Do not combine real AI with this database suite. |
+
+Unexecuted procedure, only after Oracle 26ai Free installation and explicit setup of an isolated dedicated synthetic schema with existing V001–V005 and seed, secure JDBC environment and the established wrapper/cache configuration:
+
+```powershell
+# From bans_chatbot. The runner requires ORACLE_JDBC_URL / ORACLE_DB_USER / ORACLE_DB_PASSWORD.
+$env:ORACLE_AI_QUESTION_TEST = 'YES'
+.\oracleIntegrationTest.cmd
+```
+
+Other IT classes retain independent environment opt-ins. Do not set destructive empty-schema migration/seed switches for an existing populated schema. `oracleIntegrationTest.cmd` selects the existing Maven oracle,oracle-it profiles and Failsafe; the new test cannot run from normal test. Ten Oracle IT classes are now compiled/excluded from ordinary tests. Default/test/local-mock remain DB-free, oracle remains explicit and never silently falls back. This planned command was not run in STEP 14.
+
+## Full regression follow-up (2026-11-04 KST)
+
+Offline clean test package **PASS 16:48:29**, 256 selected tests including 60 additional HTTP route/security checks. Packaged local-mock loopback anonymous access checks PASS for all 37 MVC method/path pairs. These results use ephemeral stores and do not resolve any Oracle backlog item. Ten Oracle IT classes remain excluded from normal Surefire. Oracle tests/SQL were not attempted; all actual database compatibility/ACL JOIN/migration/transaction/locking/race/performance checks remain **BLOCKED: ORACLE_26AI_NOT_INSTALLED**. Real Gemini and Oracle+Gemini E2E remain NOT_RUN. No SQL/schema/seed/framework/database change or new integration opt-in was introduced by this regression/Git-ignore maintenance.

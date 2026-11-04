@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 public class MockGeminiClient implements AiAnswerPort {
     @Override
     public String answerSyntheticQuestion(String syntheticQuestion) {
-        return "가상 자료에 대한 모의 AI 응답입니다.";
+        // Legacy arbitrary-string port stays offline; never delegate it to a live provider.
+        return egovframework.example.ai.provider.MockGeminiProvider.REPLY;
     }
 }

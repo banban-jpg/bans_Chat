@@ -2,7 +2,11 @@ package egovframework.example.document.domain;
 import java.util.*;
 /** Mutable only inside repository's serialized/transactional callback. */
 public final class ManagedDocument {
- public record Version(long id,int number,String format,String body,String state,boolean aiSearchable,boolean externalAllowed) {}
+ public record Version(long id,int number,String format,String body,String state,boolean aiSearchable,boolean externalAllowed,boolean synthetic,boolean nonSensitive) {
+  public Version(long id,int number,String format,String body,String state,boolean aiSearchable,boolean externalAllowed){
+   this(id,number,format,body,state,aiSearchable,externalAllowed,false,false);
+  }
+ }
  public final long id; public final String code,title,category,owner,scope,department;
  public String status="DRAFT",reviewer; public long currentVersionId;
  public final List<Version> versions=new ArrayList<>();

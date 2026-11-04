@@ -62,7 +62,7 @@ public class ManagedDocumentService {
    d.actionTarget=grant.employeeId();d.actionPermission=grant.permission();mark(d,actor,revoke?"GRANT_REVOKED":"GRANT_ADDED");return null;});
  }
  private boolean has(ManagedDocument d,String id,String permission){return d.grants.getOrDefault(id,Set.of()).contains(permission);}
- private void replaceState(ManagedDocument d,ManagedDocument.Version v,String state){d.versions.set(d.versions.indexOf(v),new ManagedDocument.Version(v.id(),v.number(),v.format(),v.body(),state,v.aiSearchable(),v.externalAllowed()));}
+ private void replaceState(ManagedDocument d,ManagedDocument.Version v,String state){d.versions.set(d.versions.indexOf(v),new ManagedDocument.Version(v.id(),v.number(),v.format(),v.body(),state,v.aiSearchable(),v.externalAllowed(),v.synthetic(),v.nonSensitive()));}
  boolean canRead(SessionActor actor,ManagedDocument d){return actor!=null&&actor.activeEmployee()&&d.current()!=null&&!"ARCHIVED".equals(d.status)&&(d.owner.equals(actor.employeeId())||has(d,actor.employeeId(),"READ")||"INTERNAL".equals(d.scope)||"DEPARTMENT".equals(d.scope)&&d.department.equals(actor.departmentCode()));}
  public Published published(SessionActor actor,String code){active(actor);var d=docs.find(code);if(d==null||!canRead(actor,d))throw error(HttpStatus.NOT_FOUND,"NOT_FOUND");var v=d.current();return new Published(d.code,d.title,v.number(),v.format(),render(v.format(),v.body()),v.aiSearchable());}
  public List<Published> externalCandidates(SessionActor actor){active(actor);return docs.all().stream().filter(d->canRead(actor,d)&&d.current().externalAllowed()).map(d->published(actor,d.code)).toList();}

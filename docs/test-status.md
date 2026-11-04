@@ -287,3 +287,148 @@ Environment: Windows PowerShell, Java 21.0.3, Maven Wrapper 3.9.6, eGov parent 5
 The first hidden `Start-Process` attempt was **BLOCKED by automatic approval review** (`blocked by policy`); no server was launched by that attempt. A foreground `java -jar target/bans_chatbot-1.0.0.jar --spring.profiles.active=local-mock --server.port=18081` then started successfully with a runtime-generated, temporary admin password outside the workspace. Actual localhost HTTP calls **PASS**: `/api/health` returned `UP`; CSRF/session login and `/api/auth/me` returned `EMP-001`; `GET /api/documents/search?q=휴가&page=0&size=10` returned two fixture hits; a returned fragment source link returned matching content; `q=배포` returned zero hits for D01 admin; `GET /api/documents/DOC-003/published` returned 404; anonymous search returned 401. The temporary password file was deleted and the exact server PID was stopped. This is a real local-mock HTTP result, not Oracle SQL or Gemini execution. Browser UI, mutating document workflow over live HTTP, and Oracle-backed HTTP remain **NOT_RUN** or **BLOCKED** as applicable.
 
 STEP 11 files: new domain search repository port, local-mock/Oracle adapters, `DocumentSearchService`, `DocumentSearchMapper` interface/XML and source/Oracle-IT/service/local-mock tests; modified document Controller/DTO/domain/workspace/Mapper/service/MockMvc tests; V005 migration, runner/manifest/metadata/source checks, canonical seed renderer/SQL/preflight/verification and relevant docs. No H2 or alternate DB was added. See `oracle-validation-backlog.md` for executable Oracle conditions and remaining races.
+
+## STEP 12 provider verification (2026-11-04 KST)
+
+Entry: clean `dev`, commit `1c8fd0a`. Windows PowerShell / Temurin **21.0.3**, wrapper Maven **3.9.6**, actual eGov parent/runtime **5.0.0** / resolved Boot **3.5.6**. Rechecked source, profiles, resolved parent and official eGov/Google documentation before edits. No dependency/framework version, database technology, schema/SQL/Mapper or existing route changed. Logs below are Git-ignored module files; Surefire results are under target/surefire-reports. Official documentation browsing and an unsuccessful Maven artifact download attempt are separate from Gemini API calls. Real Google model requests and Oracle connections were **0**.
+
+Common environment and arguments for actual module-directory wrapper commands (the cache argument below abbreviates the same absolute value used in execution):
+
+```powershell
+$env:MAVEN_HOME = 'C:\Users\user\.m2\wrapper\dists\apache-maven-3.9.6\0f95e7798d182e3371f3fee6d8202d3a56e6d71dfd3a2402139882ef2fbe7476'
+$cacheArg = '-Dmaven.repo.local=C:\eGovFrameDev-5.0.2-Windows-64bit\workspace-egov\bans_Chat\.maven-repo'
+```
+
+| Actual command / check | Result, time and evidence |
+|---|---|
+| `.\mvnw.cmd -o $cacheArg org.apache.maven.plugins:maven-dependency-plugin:3.6.1:get '-Dartifact=com.google.genai:google-genai:1.80.0' '-Dtransitive=false'` | **FAIL 14:57:21**, artifact/POM absent from offline cache. `step12-sdk-evaluation.log`. No SDK runtime execution and no model request. |
+| `.\mvnw.cmd $cacheArg '-Dmaven.wagon.http.retryHandler.count=0' '-Dmaven.wagon.rto=5000' org.apache.maven.plugins:maven-dependency-plugin:3.6.1:get '-Dartifact=com.google.genai:google-genai:1.80.0' '-Dtransitive=false'` | **FAIL 15:05:52**, actual repository transfer denied: `Permission denied: getsockopt`. `step12-sdk-resolution.log`. Latest SDK dependency resolution **BLOCKED by network environment**; SDK Java 21 runtime/transitive validation **NOT_RUN**. No version was guessed or old SDK adopted. |
+| `.\mvnw.cmd -o $cacheArg '-Dtest=ProviderConfigurationTest,CallBudgetTest,GeminiProviderNetworkTest' test` first attempt | **FAIL 15:02:50**, 37 tests, 29 failures / 1 error. A relative URI beginning with `gemini-...:generateContent` was parsed as a URI scheme, causing requests to fail before HTTP. Fixed with an explicitly relative `./` model path. `step12-targeted.log`. |
+| Same targeted command after URI fix | **PASS 15:03:42**, 37 tests, 0 failures/errors/skips. `step12-targeted2.log`. Contains 32 real loopback HTTP/Mockito network cases, two budget tests and then-three configuration tests. |
+| `.\mvnw.cmd -o $cacheArg clean test package` after smoke/error-contract source | **PASS 15:07:05**, 106 tests, 0 failures/errors/skips, Boot JAR. `step12-full.log`. |
+| `$env:BANS_GEMINI_SMOKE='NO'` then `.\mvnw.cmd -o $cacheArg -Pgemini-smoke test` | **PASS for the disabled opt-in gate, 15:08:45**; selected `GeminiLiveSmokeIT`, 1 test **SKIPPED**, zero executed test bodies. `step12-smoke-gate.log`. This is not a Gemini smoke success: real model call remains **NOT_RUN**. The permission variable was set only in that child process. |
+| Final `.\mvnw.cmd -o $cacheArg clean test package` after wire-debug rejection test | **PASS 15:11:01**, **98 main / 47 test sources, 107 tests, 0 failures/errors/skips**, repackaged Boot JAR. `step12-final.log` and fresh Surefire reports. 39 new selected cases plus 68 prior cases; the package phase did not execute the tests twice. |
+| Default Mock/context wiring, active-actor checks, configuration limits and explicit live activation/profile/key/model/acknowledgement gates | **PASS** in final suite. A missing key and an ambient fake key both retain Mock by default. Actual local-mock Spring context remains DB-free. Wire-debug rejects live activation. AI-only `oracle` profile selection test is not an Oracle application startup test. |
+| Mock HTTP protocol, filtering and failure paths | **PASS** in final suite. Every actual provider HTTP request targets 127.0.0.1. Checks fixed model path, key only in header, greeting-only body, token cap, no actor/history/tools, no cookie forwarding, 403/429/5xx/302/400, exactly one attempt, Retry-After seconds/date/invalid/large input, cooldown, connect-error classification, header/body stalls, response-size cap, malformed/duplicate/trailing JSON, empty/blocked/truncated/tool/key-echo replies, concurrency rejection/release and no requests for invalid actors. Public error MockMvc and captured output check sanitized fields/no upstream key or payload. |
+| Eight Oracle-only classes in ordinary Surefire | **SKIPPED by suite selection**; compiled, not executed. No Failsafe/Oracle command invoked. |
+| Oracle 26ai connection/migration/seed/SQL/ACL/transaction/lock/concurrency/restart/performance | **BLOCKED: ORACLE_26AI_NOT_INSTALLED**. Existing backlog unchanged in execution status. STEP 12 adds no DB operation. |
+| Real Gemini synthetic greeting / project-specific Free-tier quota/access | **NOT_RUN**, zero calls. Separate smoke source exists; its disabled gate was tested, not the actual API. No key was inspected, printed or used for a real request. |
+| Arbitrary-question safety review, document-to-Gemini integration, AI HTTP/UI | **NOT_RUN / intentionally not implemented in STEP 12**. Only fixed synthetic greetings are accepted. |
+| Separate packaged browser/manual live deployment | **NOT_RUN** in STEP 12. Spring contexts, common-error MockMvc, existing embedded-server STOMP E2E and provider loopback tests did execute. |
+
+Java emitted the existing Mockito dynamic-agent warning and an AssertJ deprecated test-helper warning; these were warnings, not build failures. Provider implementation has no persistence or raw request/response logging. The passing REST adapter is built from Java 21 HttpClient and existing Jackson; it does not establish latest Google SDK compatibility, actual Google quota/billing, Oracle behavior or production readiness. Counters are per-process and reset on restart. See `gemini-free-tier.md` for official links/activation details and the STEP 12 handoff for the complete file inventory.
+
+Final documentation/source `git diff --check`: **PASS**, exit 0 (Windows line-ending normalization warnings only). Aggregated 37 fresh Surefire XML reports confirm 107 tests / 0 failures / 0 errors / 0 skips. Git diff contains no database or Mapper XML changes. Source changes are uncommitted for user review; no existing user edits were overwritten.
+
+## STEP 13 read-only tools verification (2026-11-04 KST)
+
+Entry: dev at 1c8fd0a, with all prior STEP 12 modified/untracked files preserved. Windows PowerShell, Temurin **21.0.3**, Maven Wrapper **3.9.6**, actual eGov parent/runtime **5.0.0**, resolved Boot **3.5.6**. Rechecked repository/profile/build state, parent POM and official eGov and Google documents. No framework/dependency version, DB dialect, migration/seed or key activation setting changed. Oracle SQL source changes are classification SELECT columns and fixed audit metadata INSERT only. No Oracle/Gemini API connection, installation, paid activation or dependency retrieval was performed. Documentation web browsing is separate from API execution.
+
+All commands ran in bans_chatbot with the existing workspace cache and wrapper environment:
+
+```powershell
+$env:MAVEN_HOME = 'C:\Users\user\.m2\wrapper\dists\apache-maven-3.9.6\0f95e7798d182e3371f3fee6d8202d3a56e6d71dfd3a2402139882ef2fbe7476'
+$cacheArg = '-Dmaven.repo.local=C:\eGovFrameDev-5.0.2-Windows-64bit\workspace-egov\bans_Chat\.maven-repo'
+```
+
+| Actual command/check | Status, time and scope |
+|---|---|
+| `.\mvnw.cmd -o $cacheArg compile` | **PASS 15:30:35**, 110 main sources, no tests. `step13-compile.log`. |
+| `.\mvnw.cmd -o $cacheArg '-Dtest=AiToolSecurityTest,ToolRegistryTest,AiToolMockMvcTest,AiToolAuditMapperSourceTest,DocumentSearchMapperSourceTest' test` first attempt | **FAIL 15:35:17**, test compilation: missing closing `);` in new mutation-test lambda. No tests executed. Corrected test syntax. `step13-targeted.log`. |
+| Same targeted command after syntax correction | **FAIL 15:36:15**, 39 tests / two assertion failures. New test counted successful returns instead of all invocations after expected 404; changed to verify both invocations. Existing mapper source test forbade external flag text anywhere in SQL; updated it to require classification SELECT columns while still forbidding those flags in internal predicates. These were test expectations, not a bypass in production. `step13-targeted2.log`. |
+| Same selected classes plus `ManagedDocumentMapperSourceTest` | **PASS 15:38:36**, 41 tests / 0 failures/errors/skips. Added draft-state/current workspace classification validation. `step13-targeted3.log`. |
+| `.\mvnw.cmd -o $cacheArg clean test package` after additional within-run status/session and immutable/excerpt tests | **PASS 15:42:15**, 150 tests / 0 failures/errors/skips, Boot JAR. `step13-full.log`. |
+| Final `.\mvnw.cmd -o $cacheArg clean test package` after explicit constructor/null binding and transport/forged-actor tests | **PASS 15:44:44**, **110 main / 52 test sources, 152 tests / 0 failures/errors/skips**, repackaged Boot JAR. `step13-final.log` and fresh Surefire XML. Package did not rerun the same tests. |
+| New tool/security/projection/budget tests | **PASS** in final suite: 21 AiToolSecurityTest, 17 ToolRegistryTest, 5 actual-security AiToolMockMvcTest, 1 audit XML source test, plus 1 new existing-provider network guard = 45 new selected cases over STEP 12. |
+| Forged caller/user/role/department and legacy session actor | **PASS**: current account/session identity is used; cross-department/private document stays hidden. Supplied old admin authority does not bypass resource ACL. Missing real security context is rejected. |
+| Revoke/flag/withdraw/version/status/credentials/logout/department changes during runs | **PASS** with serialized memory adapters/Mockito. No stale excerpt reaches Mock after the tested pre-send changes; changed department is reloaded. This is not proof of Oracle transaction races. |
+| Question injection/SQL/salary/write tools/unknown fields/numeric or JSON abuse | **PASS**: exact reviewed question gate, registry/schema/size/call bounds reject invalid operations. Allowed document instructions remain data and cannot add a tool or permission. Non-exportable readable document text and noncanonical employee input are absent from captured Mock payload. |
+| Outbound/HTTP/audit allowlists | **PASS**: employee six fields, source four fields/200 code points, immutable copies; HTTP only counts/notice. Metadata audit has only actor/outcome/call/item fields; no question/answer/source/argument/key. UI contains transfer notice/unchecked acknowledgement and uses textContent. It was checked by MockMvc, not a visual browser run. |
+| Request/run limits and live transport boundary | **PASS**: per-session five-per-minute/one active run, input/tool/result limits, execution budget and safe audit-failure error. Concrete non-Mock provider rejected before reads; actual live adapter default tool method makes 0 HTTP requests in loopback test. |
+| Nine Oracle-only `*OracleIT` classes / real-Gemini smoke in ordinary Surefire | **SKIPPED by suite selection**, compiled but not executed. New AiToolOracleIT is opt-in via ORACLE_AI_TOOL_TEST=YES. Final suite's zero skips counts selected tests only. |
+| Actual Oracle SELECT/JDBC record mapping, classification flags, audit INSERT/REQUIRES_NEW, ACL JOIN/race/locking/transactions/performance | **BLOCKED: ORACLE_26AI_NOT_INSTALLED**. No Oracle suite or SQL was executed. |
+| Actual Gemini API/project quota/access and latest SDK runtime validation | **NOT_RUN** in STEP 13, real API requests 0. Inherited STEP 12 SDK dependency/network limitation remains unresolved; no retry or upgrade attempted. |
+| Real model function-call loop, arbitrary-question safety review, real outbound tool context | **NOT_RUN / intentionally not implemented**. Only fixed reviewed examples and Mock payloads are enabled. |
+| Packaged process/browser/manual UI workflow | **NOT_RUN** in STEP 13. Actual-security MockMvc, Spring contexts, existing embedded STOMP E2E and provider loopback tests did run. |
+
+Warnings about Mockito dynamic agents, a prior deprecated AssertJ helper and a classpath persistence-provider probe did not fail the build or create a DataSource. Ordinary tests retain zero Oracle connections and zero real Gemini calls. Source/mapper parsing is not Oracle SQL validation. Per-session counters are process-local; the final recheck does not remove a concurrent change after that check. Full modified-file inventory and next-step conditions are in the STEP 13 handoff; security/operational bounds are in ai-tool-security.md.
+
+Final checks after documentation synchronization: wrapper `-version` **PASS** (Maven 3.9.6 / Java 21.0.3 / Windows 11); `git diff --check` **PASS**, exit 0 with line-ending warnings only. Aggregating 41 fresh Surefire XML reports confirms 152/0/0/0. Git diff shows no db/oracle migration/seed/manifest changes. Changes remain uncommitted, including preserved STEP 12 work.
+
+## STEP 14 executed validation (2026-11-04 KST)
+
+Entry: dev at 1c8fd0a with prior uncommitted STEP 12/13 work preserved. Windows 11 PowerShell / Java 21.0.3 / Maven Wrapper 3.9.6 / eGovFrame 5.0.0 / Boot 3.5.6. Rechecked actual source, git status, profiles and official version/Google evidence; no versions/dependencies/configuration/DDL/seed changed. Real Oracle connections **0**, real Gemini API calls **0**; loopback HTTP and documentation browsing are separate from external model invocation.
+
+Actual commands ran from bans_chatbot with:
+
+```powershell
+$env:MAVEN_HOME = 'C:\Users\user\.m2\wrapper\dists\apache-maven-3.9.6\0f95e7798d182e3371f3fee6d8202d3a56e6d71dfd3a2402139882ef2fbe7476'
+$cacheArg = '-Dmaven.repo.local=C:\eGovFrameDev-5.0.2-Windows-64bit\workspace-egov\bans_Chat\.maven-repo'
+```
+
+| Executed command/check | Status / evidence |
+|---|---|
+| `.\mvnw.cmd -o $cacheArg compile` | **FAIL 16:14:12 KST**, new generate timeout parameter conflicted with a catch variable named timeout. No tests ran. Renamed catch variable to expired. Ignored `step14-compile.log` preserves the failure. |
+| `.\mvnw.cmd -o $cacheArg '-Dtest=AiQuestionServiceTest,QuestionPolicyTest,AiQuestionMockMvcTest,AiQuestionAuditMapperSourceTest,GeminiProviderNetworkTest' test` | **PASS 16:19:41 KST**, 77 tests / 0 failures/errors/skips, 121 main and 58 test sources. `step14-targeted.log`. |
+| `.\mvnw.cmd -o $cacheArg clean test package` | **PASS 16:22:38 KST**, **196 tests / 0 failures/errors/skips**, Java 21 compile of 121 main / 58 test sources and repackaged executable JAR. `step14-final.log`. Package reports Surefire already run, not a second execution. |
+| Fresh Surefire XML aggregation | **PASS**, 45 reports total 196/0/0/0, matching the final log. 44 additional selected cases over STEP 13: 26 service + 2 policy/budget + 11 MockMvc + 1 audit mapper + 4 loopback cases. |
+| Vacation source / expense owner / canonical public contact | **PASS**, server-built answer/source and six public DTO fields; structured path has zero Provider calls. Source link itself is exercised through authenticated document GET. |
+| Retired version, nonexistent rule, other department, ambiguous evidence, forged caller/role | **PASS**, no invented answer, no unauthorized sources or unreviewed outbound. Current actual security session is authoritative. |
+| Post-Provider revoke, withdrawal, changed version/content/external flag; structured department change | **PASS**, deterministic Mockito/memory tests return UNANSWERABLE without stale facts/sources. This proves the Java recheck only, not an Oracle cross-transaction race guarantee. |
+| Prompt injection/PII/unknown question, invented quote/ID, extra/duplicate/trailing/malformed model JSON | **PASS**, unreviewed questions do not reach Provider; model drafts never become arbitrary facts. Outbound contains only reviewed question/S1/excerpt. |
+| Provider 429/503/timeout, zero retries, minimized wire JSON, remaining-time timeout | **PASS**, Mockito and actual loopback HttpServer; no Google requests. AI MockMvc failures leave chat REST and auth available. Existing localhost STOMP regression also PASS; concurrent AI-failure/STOMP load is not separately exercised. |
+| Auth/CSRF, shared request limits, stages/tools/provider/time bounds, audit failure and metadata allowlist | **PASS**, actual-security MockMvc and focused tests. No question/answer/source/key fields in audit; answer/prompt toString redacts text. HTML uses textContent, no innerHTML/browser storage. |
+| Ten Oracle-only classes and real Gemini smoke in normal Surefire | **SKIPPED by suite selection** (compiled, excluded by name/tag); final zero skips applies only to selected tests. New AiQuestionOracleIT also requires ORACLE_AI_QUESTION_TEST=YES. |
+| Oracle ACL JOIN, mapper/JDBC/enum/CLOB mapping, audit INSERT/REQUIRES_NEW, migrations/locks/races/performance | **BLOCKED: ORACLE_26AI_NOT_INSTALLED**. Oracle suite/SQL execution not attempted. Mapper XML parsing is not SQL success. |
+| Real Gemini greeting/question, account quota/model access, Oracle+Gemini E2E | **NOT_RUN**. No key used and no live activation. SDK runtime evaluation retains the unresolved STEP 12 dependency limitation; not retried in STEP 14. |
+| Packaged live process/manual browser/visual UI verification | **NOT_RUN**. Executable packaging and MockMvc HTML/service integration passed. No final production-readiness assertion. |
+
+The intermediate compile FAIL is resolved by the final PASS; it is not erased. Warnings about Mockito dynamic-agent loading, the existing deprecated assertion helper, missing optional templates and the persistence-provider probe were non-fatal. Profile tests still verify DB-free default/test/local-mock wiring. Counters are process/session-local, and ten seconds is a stage/HTTP budget rather than a forced interrupt of repository/audit I/O. Oracle validation remains pending as listed in oracle-validation-backlog.md.
+
+Post-document checks at **16:28 KST**: wrapper `-version` PASS (Maven 3.9.6, Java 21.0.3, Windows 11); `git diff --check` found no whitespace errors (line-ending warnings only); `git diff --numstat -- bans_chatbot/db/oracle` is empty; new question main/test source trailing-whitespace search is empty. `jar tf target/bans_chatbot-1.0.0.jar` confirms production question/audit classes and XML are packaged, with no QuestionTestSupport or OracleIT entry. No tests were rerun after documentation-only edits. Changes remain uncommitted, including preserved STEP 12/13 work.
+
+## Full regression, route access and Git hygiene (2026-11-04 KST)
+
+User requested a full run of every available feature, API access checks and ignore rules for local notes/diagnostics. This is maintenance of STEP 01–14, not implementation of STEP 15. Preserved existing uncommitted work and framework/DB/model/profile choices. Environment: Windows 11, Java 21.0.3, Maven Wrapper 3.9.6, eGovFrame 5.0.0, Boot 3.5.6. No dependency retrieval or real Oracle/Gemini request.
+
+Executed from bans_chatbot using the same MAVEN_HOME and cacheArg defined in STEP 14 above:
+
+| Actual command/check | Result |
+|---|---|
+| `.\mvnw.cmd -o $cacheArg '-Dtest=RouteAccessMockMvcTest' test` | **PASS 16:47:12**, 60 tests / 0 failures/errors/skips; ignored regression-routes.log. |
+| `.\mvnw.cmd -o $cacheArg clean test package` | **PASS 16:48:29**, **256 tests / 0 failures/errors/skips**, 121 main / 59 test sources, executable JAR; ignored regression-full.log. No duplicate Surefire run during package. |
+| Fresh Surefire aggregation | **PASS**, 46 XML reports, total 256/0/0/0. Includes all previous 196 cases and 60 additional route checks. |
+| Registered MVC mappings versus explicit test inventory | **PASS**, all **37 method/path pairs**: 17 GET and 20 mutations, including the local-mock-only demo and two UI routes. Framework /error, implicit HEAD/OPTIONS and WebSocket upgrade are not counted as these MVC controller routes. |
+| Anonymous access to every mapping | **PASS**, 32 protected mappings return 401 with valid CSRF supplied where needed. Public health/CSRF GETs return 200; public login/activation with empty JSON correctly return 400. |
+| Every mutation with real login and missing CSRF | **PASS**, all 20 return sanitized 403. This is expected denial, not a broken endpoint. |
+| Authenticated read paths, unknown path and wrong method | **PASS**, 17 mapped GETs return 200 with appropriate current test resources/parameters; unknown API returns 404 and POST to GET-only health returns 405. |
+| Previously service-only document transitions through MVC | **PASS**, create/edit draft/review/reject/add version/review/publish/withdraw and search hiding. Existing tests also exercise grants/revoke/resource denial and retired sources. |
+| Packaged JAR loopback HTTP smoke | **PASS by 16:50 KST**, actual `java -jar target/bans_chatbot-1.0.0.jar --spring.profiles.active=local-mock --server.address=127.0.0.1 --server.port=0`; cookie-bearing HttpClient fetches CSRF then checks all 37 anonymous mappings against the above expected statuses. Ignored regression-http-check.log ends PACKAGED_HTTP_PASS routes=37. No credentials/CSRF bodies printed. Process stopped in finally. Authenticated business flows use MockMvc and existing embedded STOMP tests, not this anonymous wire smoke. |
+| First local smoke-script attempt | **FAIL before HTTP**, startup log was empty and Regex.Match received null. Added an empty-log guard, retried successfully. This was a disposable verification-script defect, not an application startup/API failure; preserved here separately from final PASS. Script is intentionally under ignored .scratch/route-smoke.ps1. |
+| Git ignore behavior | **PASS**, 9 required source/doc/example paths remain eligible and 17 representative local artifact/secret paths are ignored using git check-ignore --no-index. No existing source/docs remain silently ignored. |
+| Oracle-only ten classes | **SKIPPED by normal-suite selection**; actual SQL/DB/transaction/race/performance validation **BLOCKED: ORACLE_26AI_NOT_INSTALLED**, no Oracle suite attempted. |
+| Real Gemini smoke/E2E and latest SDK runtime | **NOT_RUN**, real Gemini requests 0. Real API is not authorized by this request to run offline regression. |
+
+Feature coverage in the executed full suite:
+
+| Area | Executed checks / result |
+|---|---|
+| Bootstrap/profiles/common | **PASS**: actual eGov module smoke, keyless Mock, no DataSource in normal profiles, unsafe profile/config fail-fast, API error/request-ID contract, validation and source-level Oracle migration/seed invariants. |
+| Authentication | **PASS**: activation use/expiry/reissue/concurrency, actual login/logout/session fixation/expiry/credential/status boundaries, roles and CSRF. |
+| Organization | **PASS**: 20 invented employees/5 departments, public DTO/filter/page validation, admin create/status/move, privilege injection and session refresh. |
+| Direct chat REST | **PASS**: participants, pair reuse, send/idempotency/conflict, pagination/read-state/unread counts, outsiders and invalid input. |
+| WebSocket/STOMP | **PASS**: all 3 ChatStompE2ETest scenarios on an actual embedded localhost server: two-party ack/delivery/outsider/reconnect; CSRF/origin rejection; suspended-account outbound denial. |
+| Documents/search | **PASS**: role+ACL workflow, review/grants/revoke/current publication, sanitized rendering, source/version/search bounds, internal/external distinction and synthetic fixtures. |
+| AI Provider/tools/questions/audit | **PASS**: safe defaults/config/quotas, loopback failure/timeout/JSON/key boundaries, fixed read-only tools, synthetic disclosure, current-source/structured responses, prompt injection/unanswerable and metadata-only audit. No real model output or Oracle facts certified. |
+
+Git hygiene correction: previous `**/*credential*` silently excluded production `auth/domain/CredentialStatus.java`, leaving it absent from Git's index despite builds depending on it. Narrowed secret matching to filenames/directories; this existing source is now visible as untracked and **must be included in a future code commit**. It was not rewritten or staged. Added *.local.md/*.local.txt, docs/local, notes/local, scratch/.scratch, editor/merge backups and JVM dumps/recordings. Existing *.log/target/cache/env rules remain. Shared decisions/contracts/handoff/test evidence stay versioned; do not blanket-ignore Markdown/text or remove tracked docs from the index.
+
+Final checks at **16:52:55 KST**: git diff --check **PASS** (exit 0); actual packaged smoke PID no longer exists; .scratch/route-smoke.ps1 and regression logs match ignore rules; no Oracle migration/seed diff. No application code changed after the full PASS. Changes are not staged/committed.
+
+## 로컬 자료 폴더 정리 (2026-11-04)
+
+과거 로그의 현재 위치는 모두 `bans_chatbot/local-notes/`다. 로그 55개·javac 진단 1개·로컬 HTTP 확인 스크립트 1개를 이동했고, 이동 직후 SHA-256 일치를 확인했다. 스크립트는 이동 후 모듈/출력 경로를 새 위치에 맞게 수정했다. 해당 폴더를 Git에서 제외하고 .gitignore 주석을 한글로 번역했다. 원래 경로와 해시는 이 로컬 폴더의 moved-files.json에 보관한다. 공용 docs는 이동하거나 Git에서 제외하지 않았다.
+
+애플리케이션 기능 테스트·JAR 실행은 이번 정리에서 **NOT_RUN**이며 앞선 전체 256건 PASS/경로 37개 PASS 기록을 그대로 유지한다. 파일 이동은 삭제·덮어쓰기 없이 수행했다. Oracle/Gemini 실행 상태와 SQL은 바뀌지 않았다.
+
+**PASS 16:57:26 KST**: 이동 파일 57개 존재 및 기존 경로 정리, 수정한 스크립트 외 파일 해시 일치, PowerShell AST 구문 검사, local-notes Git 제외, CredentialStatus.java 제외되지 않음, 루트/모듈 최상위 잔여 로그 0개, git diff --check exit 0을 실제 확인했다.

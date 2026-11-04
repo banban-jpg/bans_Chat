@@ -100,3 +100,73 @@ INTERNAL is readable by active employees, DEPARTMENT by the current department, 
 `GET /api/documents/{id}/versions/{versionId}/fragments/{fragmentId}` returns `{data:{documentId,versionId,fragmentId,title,content,updatedAt}}` only if that exact fragment is still in the current published, internally searchable version and the actor can currently read it. Otherwise it returns 404, including stale version IDs, withdrawn documents and revoked grants; anonymous requests return 401. `content` is source text in JSON, not trusted HTML. Clients must display it as text, or use the STEP 10 sanitized rendering path, and must never insert it via `innerHTML`. A search hit's IDs form the link; the client cannot choose an employee ID to override the session.
 
 Document creation accepts optional `tags` (0–8 distinct strings of 1–32 letters, digits, underscore or hyphen). Tags belong to document metadata, not individual versions; the synthetic seed assigns each document its category as a tag. Title, category/tag and current fragment body are searched. One fragment per version is currently produced by the STEP 10 editor and fixture. Draft edits update its fragment; a newly approved version changes the current pointer. During review of a new draft, the prior published pointer remains searchable. Withdrawal and grant revocation are excluded by both search and link queries. `local-mock` search is process-local and does not prove Oracle `DBMS_LOB.INSTR`, index use or Korean analysis. Oracle Text is deferred pending official 26ai capability review and actual analyzer/plan experiments.
+
+## STEP 12 internal provider contract (2026-11-04)
+
+No production HTTP endpoint was added. Existing auth/chat/document routes and SQL are unchanged. `ai.provider.ChatProvider.chat(SessionActor, SyntheticPrompt)` is an internal DB-independent single-turn contract. It accepts only `HELLO_KO` or `HELLO_EN` and requires an active EMPLOYEE actor. Result text is transient, omitted by Jackson and redacted in toString; it is not an HTTP conversation DTO. A future controller must not accept client-supplied actor/safety/ACL flags or use the legacy string port to reach a live provider.
+
+`MockGeminiProvider` returns the existing fixed synthetic response. The default provider is always Mock; a key alone has no effect. Live `GeminiProvider` requires explicit configuration, `gemini-live` and transfer/free-tier review. It sends only a fixed synthetic greeting, no employee identifiers/history/documents/tools, to the fixed Developer endpoint using the `x-goog-api-key` header and bounded generation configuration. Arbitrary headers, request URLs and models cannot be chosen by an HTTP client. See `gemini-free-tier.md` for operator settings, the exact model review, SDK decision and the separately gated one-call smoke procedure.
+
+Public provider failures use the existing `{code,message,requestId}` advice. Codes are `AI_TRANSFER_DENIED` (403), `AI_BUSY` / `AI_QUOTA_EXHAUSTED` / `AI_COOLDOWN` / `AI_UPSTREAM_RATE_LIMITED` (429), `AI_UPSTREAM_FORBIDDEN` / `AI_UPSTREAM_UNAVAILABLE` (503), `AI_TIMEOUT` (504), and `AI_INVALID_RESPONSE` (502). The message is fixed `AI request unavailable.`; no upstream response, key, cause or Retry-After header is forwarded. A bounded numeric retry delay is available only internally. No REST route exposes these provider operations in STEP 12. The test-only error probe is under src/test and is absent from the packaged server.
+
+**Future user notice:** questions themselves can leave the server when real AI is enabled. Only synthetic, non-sensitive input and separately authorized, freshly rechecked external-allowed synthetic document segments may be transferred. STEP 12 does not authorize arbitrary questions or document transfer and does not add a production question-review adapter.
+
+## STEP 13 read-only Mock tool preview (2026-11-04)
+
+The STEP 12 no-HTTP statement describes that earlier step. STEP 13 adds the three protected routes below. Live Gemini still cannot receive a tool payload. All identities come from the actual Spring Security session plus current account reload, never a body/query caller ID, role, department or old request attribute. Existing error/data/request-ID and CSRF contracts remain in force.
+
+| Method / path | Contract |
+|---|---|
+| `GET /api/ai/tools` | Active session. Returns `{notice,mockOnly:true,examples:[{id,text}],tools:[{name,inputSchema}],limits:{maxInputBytes:8192,maxCalls:4,maxRowsPerTool:5,maxRowsTotal:20,requestsPerMinute:5,maxRunSeconds:10}}` under data. Examples are fixed server-reviewed synthetic text, not user conversation history. |
+| `POST /api/ai/tools/preview` | Active session + CSRF + application/json. Accepts the bounded plan below. Returns only `{mock:true,toolCalls,returnedItems,notice}` under data; no question/answer, employee results or document source text is reflected in HTTP. |
+| `GET /ai/tools` | Active session. Small same-origin HTML demo: transfer notice, unchecked acknowledgement, fixed vacation example and Mock result count. No arbitrary question box or raw result rendering. |
+
+Request example, using an already authenticated session and CSRF token:
+
+```json
+{"questionId":"VACATION_HELP","question":"가상 회사의 휴가 신청 안내를 찾아주세요.","externalTransferAcknowledged":true,"calls":[{"name":"searchDocuments","arguments":{"query":"휴가","limit":3}}]}
+```
+
+`questionId` and question must exactly match a server-reviewed example. A checkbox, `synthetic` claim or masking regex cannot certify arbitrary input. Missing acknowledgement or a changed question yields 403 `AI_QUESTION_NOT_REVIEWED` with a fixed transfer notice. The service notice says questions themselves may leave the server if real AI is later enabled; real business/personal/confidential data is forbidden. No real tool transfer is enabled here.
+
+Tools are exactly `searchEmployees` (`name`, optional limit), `findDepartment` (no functional arguments, current department only), `findTaskOwner` (`query`, optional limit), `searchDocuments` (`query`, optional limit), `getDocumentExcerpt` (positive integral documentId/versionId/fragmentId). Query/name length is 1–80 Unicode code points and no control characters; limit is an integer 1–5 (default 5). Schema and runtime reject unknown functional fields, mutation/SQL/salary tools, invalid numeric types, duplicate/trailing JSON, excessive nesting and bodies above 8192 bytes. Known `callerId,userId,employeeId,role,roles,departmentId` claims are discarded before validating functional inputs, not treated as authority or advertised as useful arguments. Plans contain 1–4 calls, at most 5 items per tool / 20 total and a 24KiB Mock payload.
+
+Employee output to Mock has exactly the six STEP 07 public fields and must match canonical invented records; current department output has code/name only. Documents reuse STEP 11 ACL/current source reads but additionally require current PUBLISHED, approved/current-review document state, ai_searchable and trusted external/synthetic/non-sensitive flags. Mock evidence has only documentId/versionId/fragmentId/excerpt, excerpt at most 200 code points, no title or internal hit counts. Search filters non-exportable hits silently; a direct source denied for any such reason returns 404 `NOT_FOUND`. Internal readability does not imply exportability.
+
+POST attempts are limited to five per rolling minute and one active run per HttpSession. Service reads are checked against a 10-second execution budget (not a socket body-read timeout). Each tool reloads current session/account state; reads are repeated at the final Mock boundary. Results are ephemeral immutable copies. Revoke/status/version tests prove the Java/mock behavior only; a concurrent change after the final recheck remains a race pending Oracle validation.
+
+Additional safe error codes: 400 `AI_TOOL_INPUT_INVALID`, 429 `AI_TOOL_LIMIT`, 403 `AI_TOOL_LIVE_DISABLED`, 503 `AI_AUDIT_UNAVAILABLE`. Authentication remains 401; malformed/missing CSRF is 403. No rejected text/upstream cause/key is returned. Audit records only actor, fixed event/type/outcome and bounded call/item counts. See `ai-tool-security.md` for schema/projection, execution, audit and database limits.
+
+## STEP 14 question answer API (2026-11-04)
+
+| Method / path | Contract |
+|---|---|
+| `POST /api/ai/questions` | Active current session + CSRF + application/json; `{question}`. Returns the data envelope below, no-store. |
+| `GET /api/ai/questions/examples` | Active session; `{notice,questions:[string]}` under data, fixed reviewed synthetic examples, no-store. |
+| `GET /ai/questions` | Active session; small example selector, unchecked notice acknowledgement, textContent rendering and current source links. No browser conversation storage. |
+
+```json
+{
+  "data": {
+    "answer": "확인 가능한 권한 내 근거가 없어 답변할 수 없습니다.",
+    "answerType": "UNANSWERABLE",
+    "structuredFacts": [],
+    "sources": [],
+    "requestId": "<server UUID matching X-Request-Id>"
+  }
+}
+```
+
+answerType is STRUCTURED, DOCUMENT or UNANSWERABLE. STRUCTURED contains only canonical synthetic EmployeeView values: employeeId, displayName, departmentCode, jobTitle, companyEmail, extensionNo. The server constructs exact facts; no Provider call is made. DOCUMENT contains one Source `{documentId,versionId,fragmentId,title,url}` with server-created same-origin `/api/documents/{documentId}/versions/{versionId}/fragments/{fragmentId}` URL; that existing route reauthorizes every access. Answer text is a server prefix plus a validated current excerpt, never arbitrary model prose. UNANSWERABLE has empty arrays and a fixed non-disclosing message. Unknown/unreviewed questions, absent/multiple/retired/unauthorized/non-exportable evidence, changed grants/version/content and invalid model citations do not produce facts or sources.
+
+At most 2048 input bytes and 200 question Unicode code points; no blank/control-character text, duplicate keys/trailing JSON or unknown functional fields. Known identity claims are ignored, never authoritative. Only exact reviewed examples plus canonical `<synthetic employee name> 연락처` are processed; `출장비 담당자` uses the server-reviewed 정산 duty mapping. Arbitrary question input is not sent to any classifier. The notice explicitly warns that a question itself may be sent to Google and prohibits actual business/personal/confidential input. The UI confirmation is an informational step; the service uses the reviewed-intent policy and current ACL/classification for authorization. No extra consent field is part of this POST contract.
+
+Questions share five requests/rolling minute and one active run per session with previewTools. Maximum eight stages/four reads/one Provider call, ten-second stage checks, at most 200 excerpt code points and min(configured,256) generated tokens. Source and identity are rechecked after generation. Live generation requires all existing explicit gemini-live gates and is forbidden in test/local-mock/oracle-it. previewTools stays Mock-only. No history, streaming, query/answer persistence or model write tools.
+
+Additional safe errors are 400 `AI_QUESTION_INPUT_INVALID` and 429 `AI_ORCHESTRATION_LIMIT`; shared `AI_TOOL_LIMIT`, `AI_AUDIT_UNAVAILABLE` and STEP 12 sanitized Provider errors remain. In particular upstream 429 becomes 429, unavailable/forbidden becomes 503 and timeout becomes 504, without upstream body/header/key/cause. These errors do not alter chat REST/STOMP contracts. Audit contains only fixed actor/model/type/outcome/count/latency metadata. See ai-question-orchestration.md for the exact outbound and race boundary. The transient approved answer DTO is the explicit question API output, not raw conversation echo.
+
+## Full route verification (2026-11-04)
+
+No API contract changed during the maintenance check. The explicit RouteAccessMockMvcTest inventory matches all 37 production MVC method/path mappings in local-mock (17 GET, 20 mutation). Anonymous health/CSRF GETs succeed, login/activation empty requests return 400, and all 32 protected routes return 401 when CSRF is valid. All 20 mutation paths return 403 without CSRF even with a valid authenticated session. Authorized reads and documented document transitions pass; authenticated unknown API returns 404 and POST to GET-only /api/health returns 405. These are expected access-control outcomes, not promises that anonymous callers can access every API.
+
+The repackaged local-mock server was also checked over actual loopback HTTP for the same 37 anonymous statuses. Authenticated business/ACL scenarios use the full MockMvc chain; STOMP uses the existing embedded-server E2E tests. Oracle-backed access, deployed-environment routing and real Gemini remain separate pending validation. See test-status.md for commands/results and exclusion details.
