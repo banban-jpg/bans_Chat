@@ -270,3 +270,29 @@ Oracle remains BLOCKED: ORACLE_26AI_NOT_INSTALLED; real Gemini/Oracle E2E and SD
 사용자 요청에 따라 모듈 및 루트에 흩어져 있던 로그 55개, javac 진단 파일 1개, 로컬 확인 스크립트 1개를 `bans_chatbot/local-notes/`로 이동했다. 앞으로 개인용 다음 단계 메모와 문제 해결 자료도 이 한 폴더에서 관리한다. 폴더 전체를 Git에서 제외하고 .gitignore 주석을 한글로 바꿨다. 공용 docs는 기존 위치와 버전 관리를 유지한다.
 
 과거 문서에 파일명만 기록된 step/regression 로그의 현재 위치는 `bans_chatbot/local-notes/<파일명>`이다. 과거 `.scratch/route-smoke.ps1`은 `bans_chatbot/local-notes/route-smoke.ps1`로 이동했으며 모듈·출력 경로를 수정했다. 이동 목록과 당시 해시는 무시되는 폴더의 moved-files.json에 남겼다. 기능/SQL 변경이나 테스트 재실행은 없으며 이전 256건 PASS를 이번 정리 작업의 신규 실행 결과로 간주하지 않는다.
+
+## STEP 15 인수인계 (2026-11-04)
+
+진입 상태는 깨끗한 dev / 9f1cfad였다. 프레임워크·SDK·모델·Oracle·프로필·DDL/Mapper/seed 버전을 바꾸지 않았다. 공용 GET /에 로그인/활성화, 직원/담당업무 검색, 1:1 채팅, 문서 검색/작성/작업/승인, AI/출처, 관리자 직원 관리 화면을 구현했다. 실행/역할별 시연 절차는 web-ui.md, 실제 명령/결과는 test-status.md를 따른다. 개인 메모/진단은 계속 bans_chatbot/local-notes에 둔다.
+
+변경 파일 목록(모듈 기준):
+
+| 파일 | 역할 |
+|---|---|
+| `src/main/java/egovframework/example/common/web/WorkbenchController.java` | 공개 shell, profile 안내, CSP/no-store. |
+| `src/main/java/egovframework/example/auth/controller/ActivationAdminController.java` | 현재 관리자 세션으로 기존 일회용 코드 발급 서비스 연결. |
+| `src/main/java/egovframework/example/auth/service/PublicEndpointPolicy.java`, `global/security/SecurityConfiguration.java` | shell과 정확한 정적 파일 GET만 공개. |
+| `src/main/resources/templates/workbench.html` | 여섯 화면, 역할별 표시, 안내·접근성·POST forms. |
+| `src/main/resources/static/ui/{app.css,api.js,stomp.js,app.js}` | 가벼운 같은-origin UI/API/오류/안전 출력/세션/채팅 복구. |
+| `src/test/java/egovframework/example/common/web/{WorkbenchMockMvcTest,WorkbenchClientIntegrationTest,WorkbenchBrowserTest,WorkbenchOracleIT}.java` | 6개 화면 대응 유스케이스, 실제 JS+HTTP/STOMP, 선택적 Chrome, Oracle shell 예비 검증. |
+| `src/test/ui/{client-integration,workbench-browser}.mjs` | 추가 npm 의존성 없이 Node 통합 및 opt-in CDP 시나리오. |
+| `src/test/java/egovframework/example/global/security/RouteAccessMockMvcTest.java` | MVC 등록 목록 39개, 신규 발급 API/CSRF와 공개 shell 검사. |
+| 루트 `docs/{web-ui,decisions,api-contract,handoff,test-status,oracle-validation-backlog,gemini-free-tier}.md` | 설계·시연·현재 검증 범위와 다음 작업. |
+
+Spring SimpleBroker에는 STOMP receipt 지원이 없으므로 기다리지 않는다. 단일 서버/비내구성 broker, heartbeat 미설정, 세션/프로세스 내 한도라는 기존 제약이 남는다. 메시지 화면은 500건, 재접속 복구는 최대 10×50건, 코드로 처리하는 문서 workflow이며 승인 대기함 목록은 없다. 관리자 활성화 코드는 현재 화면에서 일시 전달하고 지우며 기본 계정 비밀번호를 체크인하지 않는다. local-mock은 12개 대기 합성 계정과 20명/5부서 fixture를 사용하고 재시작 시 모두 사라진다.
+
+Chrome 실제 클릭 테스트는 GPU/CDP 환경 문제로 BLOCKED다. 정상 기본 suite에서는 선택적 브라우저 테스트 1건을 SKIPPED하며, 실제 JS와 HTTP/WebSocket 검사·MockMvc를 브라우저 PASS로 혼동하지 않는다. Node 미설치 환경은 JS 통합 테스트가 명시적으로 SKIPPED된다. 브라우저가 동작하는 환경에서 BANS_UI_BROWSER_TEST=YES로 시각/키보드/모바일·클릭 전체 흐름을 검증해야 한다. Oracle shell 예비 IT는 ORACLE_UI_TEST=YES로 기존 명시적 Oracle suite만 사용한다. DB 부재는 BLOCKED: ORACLE_26AI_NOT_INSTALLED이며 실제 Gemini/Oracle E2E도 미검증이다.
+
+다음 STEP은 이 오프라인 검증 범위에서 진행할 수 있다. 실제 클릭 UX·반개방 소켓·장시간/500건 초과 이력·다중 사용자 실성능·Oracle 권한/트랜잭션·실 Gemini E2E는 완료 조건으로 남긴다. 최종 완성/운영 준비 완료를 선언하지 않는다. 새 서버 API와 UI 모두 existing RBAC/ACL/current-source 경계를 유지해야 한다.
+
+최종 STEP 15 gate: **2026-11-04 17:38:32 KST clean test package PASS**, 123 main/63 test source, selected 265 = **264 PASS + 1 SKIPPED**, 실패·오류 0. fresh Surefire 49개 report와 일치한다. 최종 JAR localhost 39개 경로 smoke **PASS 17:40:51**, 프로세스 종료 확인. 브라우저의 앞선 4회 FAIL과 현재 환경 BLOCKED를 정상 suite의 SKIPPED와 별도로 보존했다. 로그는 모두 local-notes, 수정 파일은 미커밋이다.

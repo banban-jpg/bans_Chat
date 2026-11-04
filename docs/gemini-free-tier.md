@@ -84,3 +84,7 @@ $env:BANS_GEMINI_TRANSFER_ACKNOWLEDGED = 'YES'
 앞선 STEP 12의 인사말 전용/운영 HTTP 없음 설명은 당시 범위다. STEP 14는 인증된 `/api/ai/questions`와 별도 `grounded` 계약을 추가한다. 검토된 합성 질문과 현재 ACL·게시 버전·external_ai_allowed·synthetic·non-sensitive 확인을 거친 단일 200자 이하 구간만 전송할 수 있다. 질문 자체가 전송될 수 있음을 고지하고, 임의 질문은 분류 모델에도 전달하지 않는다. 기본 Mock이며 test/local-mock/oracle-it에서는 live를 사용할 수 없다. previewTools의 live 거부는 유지한다.
 
 실 요청도 고정 endpoint/allowlisted 모델과 같은 한도·0회 재시도·키 보호를 재사용한다. 출력은 min(설정값,256) 토큰, JSON MIME, 남은 요청 예산 이하 HTTP timeout이다. 서버는 정확한 S1/원문 인용 외 모델 주장을 버리고 반환 전에 권한·버전·구간을 재조회한다. 구조화 출력 지원만으로 정확성·반출 적격성을 보장하지 않는다. 임의 업무 원문 반출·유료/다른 모델 자동 전환은 없다. 상세 내용은 [질문 조정 가이드](ai-question-orchestration.md), 실 검증 상태는 test-status.md를 따른다.
+
+## STEP 15 화면 연결
+
+2026-11-04 Google 공식 가격·지원 지역·폐기 일정·프로젝트 한도를 다시 확인했다. UI 작업에서 모델/SDK/무료 티어 정책은 변경하지 않았다. 실 계정의 모델 접근/무료 quota 성공 및 실 API는 NOT_RUN이다. 새 통합 화면도 검토된 가상 질문 선택·기본 Mock이며 질문 원문이 무료 Gemini로 전송될 수 있음과 실제 개인정보·기밀 입력 금지를 명시한다. 브라우저 자산에는 키나 Google API endpoint가 없다. 외부 호출은 기존 백엔드 gate를 충족해야만 가능하며, UI 표시/체크박스는 임의 질문을 외부 적격으로 만드는 근거가 아니다. Chrome 클릭 검증의 환경 제약과 실제 오프라인 검증은 web-ui.md/test-status.md를 따른다.

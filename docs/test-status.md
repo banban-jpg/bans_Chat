@@ -432,3 +432,41 @@ Final checks at **16:52:55 KST**: git diff --check **PASS** (exit 0); actual pac
 애플리케이션 기능 테스트·JAR 실행은 이번 정리에서 **NOT_RUN**이며 앞선 전체 256건 PASS/경로 37개 PASS 기록을 그대로 유지한다. 파일 이동은 삭제·덮어쓰기 없이 수행했다. Oracle/Gemini 실행 상태와 SQL은 바뀌지 않았다.
 
 **PASS 16:57:26 KST**: 이동 파일 57개 존재 및 기존 경로 정리, 수정한 스크립트 외 파일 해시 일치, PowerShell AST 구문 검사, local-notes Git 제외, CredentialStatus.java 제외되지 않음, 루트/모듈 최상위 잔여 로그 0개, git diff --check exit 0을 실제 확인했다.
+
+## STEP 15 실행 검증 (2026-11-04 KST)
+
+시작은 깨끗한 dev / 9f1cfad였다. Windows 11 / Java 21.0.3 / Maven Wrapper 3.9.6 / eGovFrame 5.0.0 / Boot 3.5.6을 유지했다. 신규 의존성/SDK/프론트 빌드 도구/모델/SQL/프로필 변경은 없다. Oracle 연결 **0회**, 실제 Gemini 호출 **0회**다. 공식 문서 브라우징과 실제 localhost HTTP/WebSocket 검사는 외부 모델 호출이 아니다.
+
+실행 명령의 공통 환경(모듈에서 실행):
+
+```powershell
+$env:MAVEN_HOME = 'C:\Users\user\.m2\wrapper\dists\apache-maven-3.9.6\0f95e7798d182e3371f3fee6d8202d3a56e6d71dfd3a2402139882ef2fbe7476'
+$cacheArg = '-Dmaven.repo.local=C:\eGovFrameDev-5.0.2-Windows-64bit\workspace-egov\bans_Chat\.maven-repo'
+```
+
+| 실제 명령/검사 | 상태·근거 |
+|---|---|
+| `node --check` app.js/api.js/stomp.js 및 두 test .mjs | **PASS**, 설치된 Node 22.17.0으로 구문 확인. 새 npm 패키지 다운로드 없음. |
+| `.\mvnw.cmd -o $cacheArg '-Dtest=RouteAccessMockMvcTest' test` | **PASS 17:12:44**, 63건/실패·오류·skip 0. `local-notes/step15-routes.log`. MVC 등록 39개와 변경 API 21개의 CSRF 경계. |
+| `.\mvnw.cmd -o $cacheArg '-Dtest=WorkbenchBrowserTest' test`, 첫 시도 | **FAIL 17:16:17**, Node exit 13/미해결 CDP await. Chrome 클릭 이전 실패. `step15-browser-build.log`. |
+| `.\mvnw.cmd -o $cacheArg '-Dtest=WorkbenchBrowserTest,WorkbenchMockMvcTest' test`, 두 번째 | **FAIL 17:19:12**, MVC 3건 PASS, 브라우저 1건 FAIL. Chrome GPU 프로세스 사용 불가로 CDP 연결 종료. test driver timeout/close 처리를 보강해 원인을 확인. `step15-browser2-build.log`. |
+| 같은 명령, 세 번째 | **FAIL 17:20:50**, MVC 3건 PASS, GPU 실행 방식 조정 후 CDP Page.enable timeout. `step15-browser3-build.log`. |
+| `.\mvnw.cmd -o $cacheArg '-Dtest=WorkbenchBrowserTest' test`, 네 번째 | **FAIL 17:24:40**, 기본 browser context에서도 Page.enable timeout. `step15-browser4-build.log`. 화면 로그인/클릭까지 도달하지 못함. |
+| 실제 Chrome 전체 UI/키보드/390px/브라우저 XSS/503 클릭 시나리오 | **BLOCKED: CHROME_RENDERER_CDP_UNAVAILABLE**. 네 번의 실행 FAIL을 보존한다. 브라우저 보안 sandbox를 해제해서 우회하지 않았다. 선택적 실행은 이후 BANS_UI_BROWSER_TEST=YES로 분리했으며 성공은 확인하지 않음. |
+| `.\mvnw.cmd -o $cacheArg '-Dtest=WorkbenchClientIntegrationTest,WorkbenchMockMvcTest' test` | **PASS 17:28:32**, 당시 MVC 3건 + 실제 JS 통합 1건, 총 4건. `step15-client-build.log`, `step15-client.log`의 CLIENT_PASS. 이후 6개 화면 대응 MVC 연속 시나리오를 1건 추가. |
+| `.\mvnw.cmd -o $cacheArg clean test package` | **PASS 17:31:36**, 265 selected / 실패 0 / 오류 0 / skip 1. `step15-full.log`. |
+| 같은 전체 명령, 안전한 현재 게시 본문 표시 추가 후 | **PASS 17:34:33**, 동일 집계, 재패키징 JAR. `step15-final.log`. |
+| 최종 같은 전체 명령, CSRF 대기 중 세션 교체 쓰기 차단 보완 후 | **PASS 17:38:32**, **123 main / 63 test source**, **265 selected = 264 PASS + 1 SKIPPED**, 실패·오류 0. `step15-release.log`. Package에서 Surefire를 중복 실행하지 않음. |
+| Fresh Surefire XML 집계 | **PASS**, 49개 report, 265/0/0/1. 선택적 WorkbenchBrowserTest 1건은 환경 gate로 SKIPPED. 실제 Node 통합·MockMvc·기존 STOMP/Provider 회귀는 실행해 PASS. |
+| 실제 JS + 실제 HTTP/WebSocket | **PASS**, 배포되는 stomp.js와 실제 세션/CSRF를 사용해 두 계정 연결·전송·ack·읽음·재연결·REST gap 복구. 실제 문서/AI 출처/429 및 AI 한도 후 채팅을 확인. API 401/503 전달·403/429 문구·stale 응답 폐기·안전 renderer는 JS 단위 경계 검사 포함. 실제 브라우저 DOM 실행과 동일하다고 주장하지 않음. |
+| 패키징 JAR localhost HTTP smoke | **PASS**, local-mock/127.0.0.1/임시 포트에서 39 MVC 경로의 익명 응답을 확인. `local-notes/step15-packaged-http.log`의 routes=39. root 200과 보호 API의 401, 공개 로그인/활성화 빈 JSON 400 등 예상 상태. 업무 로그인/클릭을 수행한 검사는 아님. 최종 JAR 재확인 기록은 step15-release-http.log. |
+| HTML/자산 크기·출력·키 노출 | **PASS**, 6개 화면 shell, CSP/no-store/nosniff, 정확한 정적 파일 GET 허용, 브라우저 저장소/HTML 직접 삽입/Google endpoint/API 키 부재. 네 자산 약 25KB, shell 포함 64KiB 미만. 실성능 벤치마크가 아니라 소스/응답 크기 검사. |
+| 신규 관리자 발급 API | **PASS**, 현재 관리자만 발급, 비관리자/위조 role·caller/CSRF 누락/자기 자신 거부, 일회용 활성화 및 로그인. 코드 응답 no-store. |
+| Oracle-only 11개 클래스 / 실 Gemini smoke | **SKIPPED by suite selection**, 컴파일만 수행. Oracle SQL/DB ACL/잠금/트랜잭션/영속성/실성능 **BLOCKED: ORACLE_26AI_NOT_INSTALLED**, 실행 시도 없음. |
+| 실제 Gemini/Oracle+Gemini E2E / SDK 최신 실행 검증 | **NOT_RUN**, 기존 제한 유지. 실 API/유료 전환/Oracle 설치하지 않음. |
+
+최소 5개 화면의 DB 없는 증빙은 다음과 같이 구분한다. (1) 활성화/로그인, (2) 직원·담당업무 검색, (3) 대화/읽음, (4) 문서 작성/ACL/검토/게시/안전 출력, (5) AI 정형/출처, (6) 관리자 변경에 대응하는 full-chain MockMvc 흐름을 실행했다. 공용 HTML의 여섯 화면 구성도 검사했다. 채팅/출처에는 실제 서버+배포용 JS 검사도 있다. 브라우저에서 여섯 화면을 클릭했다는 결과는 없다.
+
+실행 기록/Chrome 진단은 모두 ignored local-notes에 있다. 기존 Mockito agent/AssertJ deprecated/optional persistence provider 경고는 빌드 실패 원인이 아니며 DataSource를 만들지 않았다. 새 Thymeleaf template이 있으므로 이전 template-location 경고는 제거된다. Oracle/프로필/스키마/모델/권한 계약의 기존 제한은 유지하고, 시연 절차·500건 한도·heartbeat 미설정·수동 문서 코드 workflow 등 기능 한계는 web-ui.md에 정리했다.
+
+최종 JAR HTTP 재확인 **PASS 17:40:51 KST**, step15-release-http.log에 routes=39. **17:42:39 KST** git diff --check exit 0, POM/db/oracle diff 없음, 해당 smoke PID 종료, JS 자산 25,335바이트 및 JS 구문 검사를 확인했다. 이후 문서/로컬 메모만 갱신했으며 코드는 변경하지 않았다. 변경은 미커밋 상태다.

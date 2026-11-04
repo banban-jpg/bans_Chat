@@ -49,7 +49,7 @@ class RouteAccessMockMvcTest {
     }
     static Stream<Route> routes() {
         return Stream.of(
-                "GET /health", "GET /api/health", "GET /api/auth/csrf",
+                "GET /", "POST /api/admin/activations", "GET /health", "GET /api/health", "GET /api/auth/csrf",
                 "POST /api/auth/activate", "POST /api/auth/login", "POST /api/auth/logout", "GET /api/auth/me",
                 "GET /api/employees", "GET /api/departments", "GET /api/tasks/owners",
                 "POST /api/admin/employees", "PATCH /api/admin/employees/{id}/status", "PATCH /api/admin/employees/{id}/department",
@@ -82,7 +82,7 @@ class RouteAccessMockMvcTest {
     void everyRouteEnforcesItsAnonymousBoundary(Route route) throws Exception {
         var probe = request(HttpMethod.valueOf(route.method()), route.concrete()).with(csrf())
                 .contentType("application/json").content("{}");
-        int expected = Set.of("GET /health", "GET /api/health", "GET /api/auth/csrf").contains(route.key()) ? 200
+        int expected = Set.of("GET /", "GET /health", "GET /api/health", "GET /api/auth/csrf").contains(route.key()) ? 200
                 : Set.of("POST /api/auth/login", "POST /api/auth/activate").contains(route.key()) ? 400 : 401;
         var response = mvc.perform(probe).andExpect(status().is(expected)).andReturn().getResponse();
         assertThat(response.getHeader("X-Request-Id")).isNotBlank();

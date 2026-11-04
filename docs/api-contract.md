@@ -170,3 +170,17 @@ Additional safe errors are 400 `AI_QUESTION_INPUT_INVALID` and 429 `AI_ORCHESTRA
 No API contract changed during the maintenance check. The explicit RouteAccessMockMvcTest inventory matches all 37 production MVC method/path mappings in local-mock (17 GET, 20 mutation). Anonymous health/CSRF GETs succeed, login/activation empty requests return 400, and all 32 protected routes return 401 when CSRF is valid. All 20 mutation paths return 403 without CSRF even with a valid authenticated session. Authorized reads and documented document transitions pass; authenticated unknown API returns 404 and POST to GET-only /api/health returns 405. These are expected access-control outcomes, not promises that anonymous callers can access every API.
 
 The repackaged local-mock server was also checked over actual loopback HTTP for the same 37 anonymous statuses. Authenticated business/ACL scenarios use the full MockMvc chain; STOMP uses the existing embedded-server E2E tests. Oracle-backed access, deployed-environment routing and real Gemini remain separate pending validation. See test-status.md for commands/results and exclusion details.
+
+## STEP 15 화면과 활성화 발급 (2026-11-04)
+
+| 경로 | 계약 |
+|---|---|
+| `GET /` | 익명 접근 가능한 Thymeleaf 공용 shell. 개인정보/역할/문서 데이터를 담지 않음. 로그인·활성화와 인증 후 5개 업무 화면을 제공. no-store/CSP/no-referrer. |
+| `GET /ui/app.css`, `/ui/api.js`, `/ui/stomp.js`, `/ui/app.js` | 익명 접근 가능한 정확한 정적 파일 경로. /ui/** 전체 공개가 아님. API 키/브라우저 저장소/외부 CDN 없음. |
+| `POST /api/admin/activations` | 실제 활성 ACCOUNT_ADMIN 세션+CSRF. `{employeeCode}` → `{data:{employeeCode,code}}`, no-store. 대기 중인 기존 계정만 가능하며 자기 자신 발급 거부. 기존 24시간/일회성/재발급 무효화 규칙을 재사용. 코드는 안전하게 별도 전달 후 화면에서 제거. |
+
+새 API는 현재 세션/계정의 역할을 기준으로 하며 callerId/role 주장을 권한으로 채택하지 않는다. 400 잘못된 코드 형식, 401 비로그인, 403 비관리자/CSRF/자기 자신, 409 대기 상태가 아닌 계정 등 기존 안전 오류 계약을 따른다. 발급 코드의 일시적인 응답은 활성화 절차의 보안 전달 값이며 Google API 키/AI 대화 출력이 아니다. 서버 로그·클라이언트 저장소에 코드를 보관하지 않는다.
+
+기존 REST/STOMP payload와 Oracle SQL은 변경하지 않았다. 클라이언트는 기존 세 사용자 큐를 구독하며 STOMP receipt는 요구하지 않는다. 재연결 시 최근 50건씩 최대 10페이지를 읽고 순번으로 합친다. 화면 메모리는 500건으로 제한한다. 불확실한 전송은 같은 clientRequestId로 한 번 REST 확인하며 새 ID로 자동 재발송하지 않는다. 실시간 연결과 AI 실패는 별개다.
+
+현재 MVC 등록 목록은 39개 method/path 쌍이며, 정적 자산 네 개는 MVC 컨트롤러 목록과 별도로 검증한다. 이전 37개 검증은 당시 기록이다. 웹 UI가 보여주는 401/403/429/503/504 문구와 실제 검증 한계는 web-ui.md를 따른다.

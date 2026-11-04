@@ -7,6 +7,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class PublicEndpointPolicy {
     private static final Set<Route> PUBLIC = Set.of(
+            new Route("GET", "/"),
+            new Route("GET", "/ui/app.css"),
+            new Route("GET", "/ui/api.js"),
+            new Route("GET", "/ui/stomp.js"),
+            new Route("GET", "/ui/app.js"),
             new Route("GET", "/health"),
             new Route("GET", "/api/health"),
             new Route("GET", "/api/auth/csrf"),

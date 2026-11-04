@@ -63,6 +63,7 @@ public class SecurityConfiguration {
                 .sessionFixation(fixation -> fixation.changeSessionId()));
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/health", "/api/health", "/api/auth/csrf").permitAll()
+                .requestMatchers(HttpMethod.GET, "/", "/ui/app.css", "/ui/api.js", "/ui/stomp.js", "/ui/app.js").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/activate", "/api/auth/login").permitAll()
                 .anyRequest().authenticated());
         http.exceptionHandling(errors -> errors

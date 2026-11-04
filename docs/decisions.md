@@ -132,3 +132,13 @@ Bound eight stages, four reads, one provider call, ten-second stage checks and r
 Keep reusable API/security tests and shared design/handoff/validation documents under version control. Ignore disposable developer notes only through explicit local locations (notes/local, docs/local, scratch/.scratch) or *.local.md/*.local.txt, together with backups and JVM diagnostic files. Existing build logs already match *.log. Avoid blanket document ignores or index removals. Narrow secret-name rules to actual secret files/directories because the old credential substring rule had hidden the necessary Java CredentialStatus enum; its source must be included in a future commit.
 
 Add a runtime-mapping inventory and actual-security MockMvc regression test for all 37 MVC method/path mappings, plus missing document HTTP transitions. Rerun all offline tests and the packaged loopback anonymous-route smoke. No production API, framework, model, SQL or final Oracle choice changes were necessary. Results are in test-status.md; database and actual model verification stay separately blocked/not run.
+
+## STEP 15 최소 UI 결정 (2026-11-04)
+
+진입 시 dev / 9f1cfad, Git 작업 트리가 깨끗함을 확인했다. 기존 Java 21/eGovFrame 5.0.0/Boot 3.5.6과 실제 모듈·프로필·Oracle 26ai·Gemini 설정을 유지한다. eGov Boot 공식 예제와 Google 가격/지역/폐기/프로젝트 한도를 재확인했다. 모델·SDK·의존성 버전을 올리지 않고 실제 API는 호출하지 않았다.
+
+이미 있는 Thymeleaf로 공용 GET / shell을 렌더링하고 정적 ES module/CSS 네 개를 같은 origin에서 제공한다. common.web은 도메인 데이터를 담지 않는 공용 shell만 맡는다. 기존 도메인 API/인가를 재사용하며 문서 승인 대기함·전체 테이블 API를 임의로 추가하지 않는다. 계정 활성화 시연에 필요한 관리자 전용 코드 발급만 auth 내부 서비스를 기존 현재 세션/RBAC/CSRF와 연결했다. 기본 비밀번호·활성화 코드·API 키를 추가하지 않는다.
+
+브라우저 메뉴 숨김은 인가 수단이 아니다. 출처·문서·관리자 쓰기는 서버 권한을 다시 검사한다. 모든 출력은 textContent/허용 DOM 요소로 처리하며 서버 게시 renderer의 제한 태그도 텍스트로 복원한다. CSP/no-store, POST form, same-origin 쿠키/CSRF, 세션 교체 전 비동기 응답/쓰기를 폐기하는 경계를 적용했다. AI는 기존 검토 질문 선택만 제공하고 외부 전송 고지를 유지한다.
+
+작은 STOMP 클라이언트는 SimpleBroker가 지원하지 않는 receipt를 기다리지 않고, 세 고정 큐와 기존 애플리케이션 ack를 사용한다. 재접속·REST 복구·안정적인 요청 ID·제한된 메모리/페이지 수를 사용한다. Chrome renderer/CDP가 이 환경에서 실패하여 클릭/시각 E2E는 BLOCKED로 남겼다. 대신 실제 HTTP/WebSocket 서버에 배포용 JS 클라이언트를 연결한 테스트와 6개 화면에 대응하는 MockMvc 흐름을 실행한다. 이 검증을 실제 브라우저 클릭 PASS로 바꾸어 기록하지 않는다. 상세 범위·실행법은 web-ui.md와 test-status.md에 기록한다.

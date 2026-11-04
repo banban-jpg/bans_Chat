@@ -230,3 +230,27 @@ Other IT classes retain independent environment opt-ins. Do not set destructive 
 ## Full regression follow-up (2026-11-04 KST)
 
 Offline clean test package **PASS 16:48:29**, 256 selected tests including 60 additional HTTP route/security checks. Packaged local-mock loopback anonymous access checks PASS for all 37 MVC method/path pairs. These results use ephemeral stores and do not resolve any Oracle backlog item. Ten Oracle IT classes remain excluded from normal Surefire. Oracle tests/SQL were not attempted; all actual database compatibility/ACL JOIN/migration/transaction/locking/race/performance checks remain **BLOCKED: ORACLE_26AI_NOT_INSTALLED**. Real Gemini and Oracle+Gemini E2E remain NOT_RUN. No SQL/schema/seed/framework/database change or new integration opt-in was introduced by this regression/Git-ignore maintenance.
+
+## STEP 15 UI Oracle 검증 대기 (2026-11-04)
+
+이번 UI는 기존 도메인 Port/Mapper를 사용하며 SQL/DDL/seed/트랜잭션 설정을 변경하지 않았다. 모든 Oracle 실행 항목은 **BLOCKED: ORACLE_26AI_NOT_INSTALLED**다. HTML/MockMvc/메모리·Mock Provider/실제 localhost JS 통합 검사는 실제 Oracle 데이터 검증이 아니다.
+
+| 항목 | 코드/상태 |
+|---|---|
+| Oracle 프로필의 공용 shell/정적 파일/인증 경계 | `common.web.WorkbenchOracleIT` 추가·컴파일. ORACLE_UI_TEST=YES일 때만 실행. 현재 BLOCKED/NOT_RUN. Oracle banner와 비로그인 API 차단만 예비 검사하며 DB-backed 로그인/UI E2E는 아님. |
+| 관리자 코드 발급→활성화→로그인→권한 갱신 | 기존 Oracle auth Mapper 재사용. 실제 잠금·일회성 소비·재발급/경합·만료·세션 무효화는 BLOCKED. 기존 AuthOracleIT와 별도로 HTTP/UI 연속 시나리오 보강 필요. |
+| 검색·대화 목록/전송/읽음·문서 workflow·AI 출처 | 기존 Oracle 조직/채팅/문서/AI IT를 Mock Provider로 재실행해야 함. JDBC/CLOB/ACL JOIN/현재 버전/grant race/commit 후 STOMP와 실제 풀 지연은 전부 BLOCKED. |
+| 브라우저+Oracle 전체 경로와 실성능 | 테스트 미구현/NOT_RUN, 실제 실행 BLOCKED. Chrome renderer/CDP도 현재 환경에서 BLOCKED이므로 별도 해결 필요. |
+| 실 Gemini와 Oracle E2E | NOT_RUN. oracle-it에 실 Gemini를 켜지 않으며 별도 명시적 허가/무료 티어 검토 필요. |
+
+Oracle 설치 및 전용 합성 스키마의 기존 V001–V005/seed 준비 이후에만 실행할 **미실행 명령**:
+
+```powershell
+# bans_chatbot, 기존 ORACLE_JDBC_URL / ORACLE_DB_USER / ORACLE_DB_PASSWORD 설정 후
+$env:ORACLE_UI_TEST = 'YES'
+.\oracleIntegrationTest.cmd
+```
+
+기존 domain별 opt-in은 각각 유지한다. Oracle IT 클래스는 총 11개이며 일반 test에서 이름/tag로 제외한다. Oracle 프로필은 DB가 없을 때 Mock으로 전환하지 않는다. 기존 migration/seed destructive opt-in을 운영/기존 데이터 스키마에 적용하지 않는다. 최종 DB와 영속성 판정은 여전히 Oracle 26ai Free 기준으로 대기한다.
+
+STEP 15 최종 offline gate는 17:38:32 KST selected 265 / PASS 264 / SKIPPED 1 / FAIL·ERROR 0이다. 최종 JAR의 39개 localhost 경로 검사도 PASS했다. 이 결과로 Oracle backlog를 완료 처리하지 않는다. 이번 단계 실제 Oracle 연결과 Gemini 호출은 각각 0회다.
