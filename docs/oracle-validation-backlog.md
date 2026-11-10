@@ -1,5 +1,62 @@
 # Oracle 26ai validation backlog
 
+## STEP 19 재확인 — Oracle 결과는 승격하지 않음
+
+2026-11-04 19:09KST: Oracle서비스/PATH도구/1521리스너/설치registry/접속env값 존재를 조사했으나 사용 가능한 설치·접속증거 없음. 실제 JDBC/SQL접속시도0. Oracle13개IT 전부 **BLOCKED: ORACLE_26AI_NOT_INSTALLED** 유지다. 신규 [ORACLE_VERIFICATION_CHECKLIST.md](ORACLE_VERIFICATION_CHECKLIST.md)에 각 class·gate·데이터 전제/실행여부/수락 결과 기록란을 추가했다. 기존 [상세 명령](oracle-install-validation.md)과 함께 사용한다.
+
+현재39MVC경로의 Mock실HTTP성공/285단위·Mock PASS/별도부하2PASS는 Oracle SQL·ACL JOIN·commit/락·성능 증거가 아니다. 첫관리자 secure bootstrap 미구현과 TLS/backup·restore/DB중단회복도 최종 수락 차단으로 유지한다. Oracle설치/SQL방언/스키마/마이그레이션/seed 내용은 변경하지 않았다.
+
+## STEP 18 최종 DB 수락 대기
+
+상태는 계속 **BLOCKED: ORACLE_26AI_NOT_INSTALLED**다. [oracle-install-validation.md](oracle-install-validation.md)가 최종 설치 후 단계별 실행 매뉴얼이며, [known-limitations.md](known-limitations.md)의 미구현 항목도 함께 수락해야 한다. 모든 Oracle 명령은 현재 미실행이다.
+
+| 항목 | 수락 기준 / 현재 상태 |
+|---|---|
+| 설치·계정·제품 증거 | 공식 Windows 전제·백업·승인·전용 PDB/schema·Oracle26ai Free banner/RU. JDBC major26 단정 제거. banner unit4건 PASS는 실제 연결 증거 아님. BLOCKED. |
+| migration | V001–V005/manifest/18 tables/5 roles/3 VALID triggers/제약 negative rollback/재실행거부. empty gate와 수동 apply 중 하나만. BLOCKED. |
+| seed | migrated empty state에서 rollback 2회 적용 IT 후 명시적 commit seed, 5부서20직원12pending계정20문서/관계. active 계정 이후 재적용 금지. BLOCKED. |
+| 최초 관리자 | **보안 bootstrap 미구현**, Oracle 인증/전체 UI 수락의 차단 사항. pending 기본값을 버리거나 dummy test hash를 적용하지 말고 별도 승인 구현 필요. |
+| 기능·보안·영속성 | 13개 Oracle IT를 각 gate/데이터 전제별로 실행, 실제 HTTP/HTTPS API·재시작 상태·현재 ACL·부서/grant revoke·버전. BLOCKED. |
+| 메시지/승인 경쟁 | room_seq/idempotency/read, FK/락/승인/revoke commit race, 실패시 rollback. 일부 코드 준비, 추가 다중 연결 case TODO. BLOCKED. |
+| STOMP/AI | 실제 commit 후 전달/실패시 미발송/중복·누락 복구; Oracle 검색+Mock/반출0회/감사 내구성. BLOCKED. |
+| 부하/중단/복구 | track-b 두 gate의 커밋 부하, 계획/리소스, 승인된 DB stop/restart, 백업 분리복원/RPO·RTO 실측. NOT_RUN/BLOCKED. |
+| 배포 경계 | oracle Secure 쿠키와 TLS/동일 origin WS/프록시·내부망 통제/비밀·로그/백업 보관 검증. NOT_RUN. |
+
+명령은 체크리스트에 class/환경변수/SQL client 경로까지 기록했다. 기존 `oracleIntegrationTest.cmd`/Maven oracle+oracle-it/tag 격리 유지, 정상 test의 실제 연결은 0회다. seed rollback IT를 committed seed 뒤 실행하거나 모든 opt-in을 동시에 켜지 않는다. ChatConcurrencyOracleIT는 실제 커밋을 남기므로 전용 폐기 가능 스키마와 두 gate가 필수다. 자동 설치/삭제/DDL/seed/복구/유료 전환은 없다.
+
+STEP18 offline build PASS나 driver 다운로드/Mapper parse로 위 항목을 PASS로 올리지 않는다. 최종 DB 포함 검증·운영 준비 완료 판정은 보류한다.
+
+## STEP 17 트랙 B (2026-11-04)
+
+모든 Oracle 실험은 **BLOCKED: ORACLE_26AI_NOT_INSTALLED**다. Mock 30연결/부하 9회/HTTP2763회 결과와 기본 suite 280 PASS는 Oracle 실측 증거가 아니다. SQL dialect/최종 DB/기존 DDL/seed/Mapper는 변경하지 않았다. 기존 태그+Failsafe 격리 유지, Oracle IT 13개가 일반 test에서 제외된다.
+
+준비한 `ChatConcurrencyOracleIT`는 별도 worker transaction 20개가 10개 requestId를 각 2회 보내고 정확히 10개 연속 room_seq와 read monotonic을 검사한다. 실제 커밋 쓰기이며 테스트가 자동 rollback하지 않는다. 전용 폐기 가능한 migrated/seeded schema, 외부 writer 없음, ORACLE_LOAD_TEST=YES와 ORACLE_LOAD_WRITES_ACK=YES 두 opt-in에서만 실행한다. **코드 컴파일만 PASS**, 실제 SQL/lock/commit 결과는 BLOCKED다.
+
+미실행 절차: 기존 Oracle 환경 변수와 Maven 설정 후 루트에서 `performance/scripts/track-b.ps1` 실행. runner가 기존 oracleIntegrationTest.cmd/Failsafe의 ChatConcurrencyOracleIT를 선택한다. 설치/migration/seed/중단/데이터 삭제를 자동 수행하지 않는다. 자원 관측은 read-only oracle-observe.sql을 운영자가 별도 수행하며 v$ 권한이 없으면 DBA가 수행한다. AI/앱의 권한을 확장하지 않는다.
+
+Oracle Free 공식 제한(2 cores/2GB RAM/12GB user data)을 기준으로 계획한다. 상세 공식 링크·관측 SQL 한계·표는 performance-and-failure.md에 있다. 남은 항목은 문서 승인/revoke/부서 이동 다중 연결 commit 경쟁, FK/trigger/실행계획/검색/CLOB/pool wait, DB 중단·복구/복구 후 동일 키 재전송, CPU·메모리·디스크 시간축 관측이다. 이 중 신규 concurrency IT 외 추가 fault injection/plan 자동화는 TODO/NOT_RUN이다.
+
+운영 DB/성능 검증 완료 판정은 보류한다. Oracle 설치 후 트랙 B를 명시적으로 실행해야 한다. 실제 Gemini/Oracle E2E도 NOT_RUN이며 oracle-it에서는 Mock만 사용한다.
+
+## STEP 16 공격 시나리오 Oracle 대기 (2026-11-04)
+
+전체 offline **PASS 18:05:32**, 278 PASS/1 SKIPPED/실패·오류 0. 모든 실제 DB 항목은 **BLOCKED: ORACLE_26AI_NOT_INSTALLED**이며 offline 입력 거부/Mapper source 검사를 SQL 안전성 증명으로 취급하지 않는다. migration/seed/production SQL/DB 선택은 변경하지 않았다.
+
+`document.mapper.SecurityAttackOracleIT`를 추가했다. 기존 `src/test`의 `*OracleIT` + `@Tag("oracle-integration")` + 명시적 Failsafe를 사용하므로 별도 src/oracleIntegrationTest 플러그인을 새로 만들지 않았다. 일반 test에서는 이름/tag로 제외한다. 총 Oracle IT는 12개다.
+
+- 준비 코드: 전용 seeded schema의 EMP-002를 테스트 transaction에서 활성화, 실제 Oracle literal injection query, Oracle MERGE로 READ grant 부여, source 조회, SYSTIMESTAMP revoke, 동일 transaction 내 거절 확인 후 rollback. **컴파일만 했으며 실행 BLOCKED**.
+- 별도 TODO/NOT_RUN: 두 연결에서 commit된 revoke/부서 이동/출판 경쟁, lock ordering/동시 승인, audit REQUIRES_NEW 내구성, Oracle 실제 injection/constraint/JDBC/실성능·부하. Oracle 의존 P0는 계속 차단급 검증 대기다.
+- 실제 Gemini/Oracle E2E: NOT_RUN. oracle-it에서 Mock Provider를 유지한다.
+
+Oracle 설치 및 전용 합성 스키마의 기존 migration/seed/환경 변수 준비 이후에만 실행할 **미실행 절차**:
+
+```powershell
+$env:ORACLE_SECURITY_TEST = 'YES'
+.\oracleIntegrationTest.cmd
+```
+
+기존 domain별 opt-in과 파괴적 migration/seed 제한은 유지한다. 이번 결과로 어떤 DB backlog도 PASS로 변경하지 않는다. 최종 보안 검증 완료 판정은 보류한다.
+
 Status on 2026-11-02 KST: **BLOCKED: ORACLE_26AI_NOT_INSTALLED**. No Oracle SQL or connection was executed.
 
 | Future check | Required condition | Current status |
@@ -254,3 +311,41 @@ $env:ORACLE_UI_TEST = 'YES'
 기존 domain별 opt-in은 각각 유지한다. Oracle IT 클래스는 총 11개이며 일반 test에서 이름/tag로 제외한다. Oracle 프로필은 DB가 없을 때 Mock으로 전환하지 않는다. 기존 migration/seed destructive opt-in을 운영/기존 데이터 스키마에 적용하지 않는다. 최종 DB와 영속성 판정은 여전히 Oracle 26ai Free 기준으로 대기한다.
 
 STEP 15 최종 offline gate는 17:38:32 KST selected 265 / PASS 264 / SKIPPED 1 / FAIL·ERROR 0이다. 최종 JAR의 39개 localhost 경로 검사도 PASS했다. 이 결과로 Oracle backlog를 완료 처리하지 않는다. 이번 단계 실제 Oracle 연결과 Gemini 호출은 각각 0회다.
+
+## 2026-11-09 live Oracle seed progress
+
+On the dedicated `FREEPDB1` demo schema, `OracleConnectionOracleIT` passed and the canonical `S001__synthetic_company.sql` executed once through JDBC (216 statements, one committed transaction). A fresh connection verified the expected seed counts and document current-version relationship. This changes the live seed application/count gate to **PASS** for that schema. `apply_seed.sql` via SQL*Plus, a second idempotence pass, injected-failure rollback, negative FK/UK/CHECK/trigger tests, concurrency, restart persistence, and Oracle UI authentication remain **NOT_RUN** or pending; earlier STEP-specific blocked entries below are historical.
+
+## 2026-11-09 Oracle UI conversion
+
+The Oracle-profile JAR and HTTPS login page/CSRF endpoint now run against the configured database. A guarded one-time EMP-001 bootstrap is implemented and reached its password prompt, but no password was entered and no account update was committed. Thus actual Oracle authentication, secondary account activation, document/chat workflows, persistence after restart, and full browser UI remain **NOT_RUN**. See [oracle-ui-demo.md](oracle-ui-demo.md) for the operator sequence; earlier no-Oracle BLOCKED entries are historical for this machine.
+
+The first-admin landing-page correction was verified against the live Oracle profile: `GET /` now shows setup guidance and hides the login form while EMP-001 is PENDING. This is **PASS** for the read-only onboarding state only; activation and post-activation UI remain **NOT_RUN**.
+
+The operator-selected local property path is implemented and its no-property Oracle startup was verified. `BANS_ORACLE_FIRST_ADMIN_PASSWORD` remains empty in the Git-ignored file, so live activation, persisted password hash, and sign-in are **NOT_RUN**. On first configured startup, the existing transaction checks the dedicated schema/seed and writes one account update plus metadata audit; later startups skip activation.
+
+## 2026-11-10 administrator authentication result
+
+The operator's local four-character demo password was accepted only under the explicit loopback HTTPS/Mock AI/`BANS_CHAT` short-password opt-in. The first Oracle startup completed the guarded activation; HTTPS login and `/api/auth/me` returned EMP-001 with `ACCOUNT_ADMIN` and a Secure session cookie. A restart with the unchanged property and a repeat login also passed. Thus the first-admin activation/login gate is **PASS** for this dedicated local schema. Secondary account activation, full browser click flow, chat/document/AI Oracle UI operations, and broader Oracle integration cases remain **NOT_RUN**.
+
+## 2026-11-10 synthetic demo password update
+
+All 12 existing seeded accounts are now ACTIVE in the dedicated local Oracle schema, and a direct JDBC BCrypt comparison passed for each. This is **PASS** for database provisioning and local hash verification. The local generated SQL is guarded and Git-ignored. A rerun caused zero new audit rows. Secondary-account HTTP sign-in, normal activation-code workflow, full browser UI, and Oracle chat/document/AI operations remain **NOT_RUN** because the operator asked that the server stay stopped. Earlier PENDING-account backlog entries describe historical pre-provisioning state.
+
+The password mapping was corrected after operator feedback: each password now matches its employee-code number, rather than the account's position in the 12-row list. Ten hashes were rotated in the live Oracle schema; all 12 matches passed and a repeated application added zero audit rows. HTTP sign-in remains **NOT_RUN** while the server is stopped.
+
+The operator's final mapping uses the three-digit suffix alone. All 12 hashes were rotated and verified against the final suffix passwords; the prior prefixed passwords no longer match. Database provisioning is **PASS**. HTTP sign-in remains **NOT_RUN** while the server is stopped.
+
+The `emp001` sign-in report revealed a login identifier mismatch, now corrected in the service and form. A no-listener MockMvc suite passed for four login-code variants; direct Oracle JDBC password verification passed; the Oracle-profile JAR was rebuilt. Live HTTP sign-in with that new JAR remains **NOT_RUN** until the operator starts the server.
+
+2026-11-10 PASS: Oracle demo login and employee directory smoke check against the dedicated schema. Other domain Oracle integration checks retain their prior status; this smoke check does not establish them as PASS.
+
+
+## Oracle-only 8080 demo (2026-11-10)
+
+2026-11-10 PASS: Oracle-backed login and employee directory on HTTP loopback port 8080. Remaining Oracle integration cases retain their previous status.
+
+
+## Consolidated local settings (2026-11-10)
+
+2026-11-10 PASS: Oracle local connection sourced from Git-ignored `.env`; login and employee directory smoke checks passed on port 8080. Remaining integration checks unchanged.

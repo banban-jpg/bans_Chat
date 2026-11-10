@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Local demonstration API for invented employees; absent from Oracle mode. */
 @RestController
-@Profile("local-mock")
+@Profile("fixture-test")
 public class SyntheticEmployeeController {
     private final EmployeeDirectoryService service;
 

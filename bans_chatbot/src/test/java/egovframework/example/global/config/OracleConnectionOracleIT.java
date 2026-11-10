@@ -21,7 +21,13 @@ class OracleConnectionOracleIT {
     void connectsToOracle26ai() throws Exception {
         try (Connection connection = dataSource.getConnection()) {
             assertThat(connection.getMetaData().getDatabaseProductName()).containsIgnoringCase("Oracle");
-            assertThat(connection.getMetaData().getDatabaseMajorVersion()).isEqualTo(26);
+            // 26ai is a product name; current release numbering is 23.26, not JDBC major 26.
+            try (var query=connection.createStatement();var rows=query.executeQuery("SELECT banner_full FROM v$version WHERE banner_full LIKE 'Oracle%'")) {
+                assertThat(rows.next()).isTrue();assertTargetBanner(rows.getString(1));
+            }
         }
+    }
+    static void assertTargetBanner(String banner) {
+        assertThat(banner).containsIgnoringCase("Oracle").containsIgnoringCase("26ai").containsIgnoringCase("Free");
     }
 }

@@ -16,9 +16,19 @@ class ProfileBoundaryGuardTest {
 
     @Test
     void mockAndOracleCannotBeMixed() {
-        assertThatThrownBy(() -> check("oracle", "local-mock"))
+        assertThatThrownBy(() -> check("oracle", "test"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("PROFILE_CONFLICT");
+    }
+
+    @Test
+    void bootstrapRequiresOracleAndCannotBeAnIntegrationTest() {
+        assertThatThrownBy(() -> check("oracle-bootstrap"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("oracle-bootstrap requires oracle");
+        assertThatThrownBy(() -> check("oracle", "oracle-bootstrap", "oracle-it"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("oracle-bootstrap requires oracle without oracle-it");
     }
 
     private static void check(String... profiles) {

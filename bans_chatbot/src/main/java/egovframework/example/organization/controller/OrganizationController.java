@@ -19,7 +19,7 @@ public class OrganizationController {
  }
  @ModelAttribute
  public void labelSyntheticData(jakarta.servlet.http.HttpServletResponse response) {
-  if(environment.acceptsProfiles(org.springframework.core.env.Profiles.of("local-mock"))) {
+  if(environment.acceptsProfiles(org.springframework.core.env.Profiles.of("test"))) {
    response.setHeader("X-Demo-Data", "SYNTHETIC_EPHEMERAL");
   }
  }

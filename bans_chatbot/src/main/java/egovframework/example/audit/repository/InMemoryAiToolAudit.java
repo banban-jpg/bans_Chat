@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 /** Bounded ephemeral metadata only. */
-@Repository @Profile({"test", "local-mock"})
+@Repository @Profile({"test"})
 public class InMemoryAiToolAudit implements AiToolAudit {
     private final ArrayDeque<AiToolEvent> events = new ArrayDeque<>();
     public synchronized void record(AiToolEvent event) {

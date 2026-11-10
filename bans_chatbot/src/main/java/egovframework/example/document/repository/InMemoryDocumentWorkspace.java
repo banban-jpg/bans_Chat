@@ -10,14 +10,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.http.HttpStatus;
-@Repository @Profile({"test","local-mock"})
+@Repository @Profile({"test"})
 public class InMemoryDocumentWorkspace implements DocumentWorkspace {
  public record Event(String actor,String code,String action) {}
  private final Map<String,ManagedDocument> docs=new HashMap<>();
  private final List<Event> events=new ArrayList<>();
  private long nextId=1,nextVersion=1;
  public InMemoryDocumentWorkspace() {}
- @Autowired public InMemoryDocumentWorkspace(Environment environment){if(environment.acceptsProfiles(Profiles.of("local-mock")))loadSyntheticFixture();}
+ @Autowired public InMemoryDocumentWorkspace(Environment environment){if(environment.acceptsProfiles(Profiles.of("fixture-test")))loadSyntheticFixture();}
  private synchronized void loadSyntheticFixture(){
   for(var row:SyntheticDocumentFixture.documents()){
    var scope=switch(row.scope()){case COMPANY->"INTERNAL";case PRIVATE->"SELECTED";default->"DEPARTMENT";};

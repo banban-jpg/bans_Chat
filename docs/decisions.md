@@ -1,5 +1,35 @@
 # Decisions
 
+## STEP 19 — 새 기능 없이 현재 계약·검증 상태 확정
+
+API source 추출을 Spring runtime inventory와 대조하고 실제 모든39 MVC매핑 성공 HTTP 요청을 확인한다. REST36/HTML3/static4/STOMP6을 별도 집계해 UI화면과 API 수를 섞지 않는다. 일반288 testcase(285PASS/3SKIP)와 별도 opt-in2PASS, Oracle13class BLOCKED의 분모도 구분한다. 자동 경로/결과 생성에 표준 Python만 사용하며 SDK/POM/DDL/인증정책 변경은 없다.
+
+최초 관리자 bootstrap, Oracle 실동작, REST fallback 발송 한계, 도메인 양방향 의존·legacy 후보는 [최종 보고서](FINAL_VERIFICATION_REPORT.md)에 근거/우선순위/제안을 남기고 임의 정책변경/삭제하지 않았다. 검증 도구만 txt/py검사 누락 및 smoke evidence 파일명 고정을 수정했다. 로그/캐시/개인메모는 기존 ignored 폴더에 두고 요청한5개 명세·결과·실행 문서는 Git으로 공유한다.
+
+## STEP 18 인수인계 판단 (2026-11-04)
+
+STEP 16/17의 미커밋 변경을 보존한 상태로 README와 현재/설치 후 경로를 분리한다. 기본 Mock을 명령에서도 명시하고 설치/삭제/SQL 적용을 자동 실행하지 않는다. .env.example은 값 없는 변수 이름만 제공한다. 재현 가능한 build/test/run/smoke/source 검사를 scripts에 두고 원시 결과는 local-notes로 제한한다.
+
+Oracle 제품명26ai와 내부23.26 릴리스는 같지 않으므로 예비 IT의 JDBC major=26 단정을 제품 banner/Free edition 증거로 교체했다. 공식 Oracle Upgrade Guide를 근거로 하며 실제 DB 실행 성공은 주장하지 않는다. Oracle 최초 관리자 보안 bootstrap이 없음을 최종 수락의 차단 항목으로 공개한다. dummy hash/일괄 ACTIVE seed/Mock provisioning으로 우회하지 않는다. 정상 source/DDL/버전/모델/의존성은 바꾸지 않았다.
+
+현재 구조/ERD/보안 문서 앞에 최신 내용을 정리하고 과거 STEP 설명은 이력으로 분리한다. Oracle 설치 후 13개 IT를 빈 스키마 migration/rollback seed/committed seed/domain별 gate/커밋 부하 단계로 나누며 모드별 서로 다른 전제를 일괄 활성화하지 않는다. DB 검증 완료는 실제 migration·제약/락·영속 API/ACL·commit 후 STOMP·AI 검색·부하·백업 복구가 모두 수락된 뒤에만 가능하다.
+
+## STEP 17 Mock 관측과 Oracle 실측 분리 (2026-11-04)
+
+dev / 88836b4의 미커밋 STEP 16 변경을 보존했다. Java 21/eGovFrame 5.0.0/Boot 3.5.6, Oracle 26ai Free, 모델/SDK/프로필/운영 SQL은 유지한다. 공식 eGov Boot 예제와 Oracle 26ai Free 자원 제한을 확인했다. 신규 부하 도구/의존성은 도입하지 않고 기존 Maven/JUnit/Node/실제 localhost HTTP·STOMP 및 배포용 JS 클라이언트를 재사용한다.
+
+12개 합성 계정으로 10/20/30개 세션 연결을 각 3회 실행한다. 실제 고유 직원 수와 연결 수를 분리하며 cold-login·동일 PC·고정 순서·작은 표본을 명시한다. 의도한 409/404/401/429와 예상 밖 오류를 분리하고, 복합 operation 표본을 HTTP 처리량/SLA로 바꾸지 않는다. 로그·JSON은 local-notes에만 두고 재현 script/집계 문서는 버전 관리한다.
+
+Oracle의 2 cores/2GB RAM/12GB 사용자 데이터 제한을 바탕으로 트랙 B를 계획하지만 Mock 숫자로 capacity를 추정하지 않는다. 전용 스키마 커밋 쓰기에는 ORACLE_LOAD_TEST와 ORACLE_LOAD_WRITES_ACK 두 gate가 필요하다. DB 설치/중단/복구/삭제는 자동 수행하지 않는다. 전체 Oracle 실험은 BLOCKED다. 이번 병목 후보는 가설로만 기록하고 main 성능 최적화나 보안 비용 완화를 하지 않는다.
+
+## STEP 16 보안 검증 경계 (2026-11-04)
+
+기존 버전/DB/모델을 유지하고 OWASP WebSocket/Session/Logging/Prompt Injection 공식 지침을 기준으로 기존 회귀와 신규 공격 case를 묶는다. 스캐너를 무분별하게 추가하지 않는다. 질문 outbound 정책을 명시적 서버 객체로 분리하고 실제 Gemini 어댑터의 loopback 요청 바이트를 비교한다. 허용되지 않은 fragment/미검토 질문의 전송 시도는 0회여야 한다. 승인된 합성 문서의 공격 지시는 데이터일 뿐 도구/권한 정책이 아니다.
+
+STOMP 변환 예외가 원문을 보유할 수 있으므로 예외 자체를 로그/응답에 넘기지 않는 catch-all을 추가한다. 수정 전 실제 누출 재현은 하지 않았으며 예방적 P1 보강으로 기록한다. 실제 JSON 공격과 로그 검사로 수정 후 경계를 검증한다. Oracle 테스트는 기존 Maven Failsafe/tag/전용 runner를 재사용해 불필요한 별도 소스 플러그인을 추가하지 않는다. 실제 DB 격리는 이름/tag와 환경 opt-in으로 유지한다.
+
+심각도는 공격 실패 시 영향과 발견 여부를 구분한다. offline PASS/미해결 P0 0은 전체 보안 인증이 아니며, Oracle 의존 P0가 BLOCKED인 상태의 최종 완료 판정은 보류한다. 자세한 실행 근거는 security-test-results.md/test-status.md를 따른다.
+
 ## STEP 01 — 2026-11-02
 
 - Retain the repository's genuine eGov 5.0.0 parent and runtime modules. Its resolved POM selects Spring Boot 3.5.6. Set Java release to 21; do not choose an unrelated Boot version.
@@ -142,3 +172,47 @@ Add a runtime-mapping inventory and actual-security MockMvc regression test for 
 브라우저 메뉴 숨김은 인가 수단이 아니다. 출처·문서·관리자 쓰기는 서버 권한을 다시 검사한다. 모든 출력은 textContent/허용 DOM 요소로 처리하며 서버 게시 renderer의 제한 태그도 텍스트로 복원한다. CSP/no-store, POST form, same-origin 쿠키/CSRF, 세션 교체 전 비동기 응답/쓰기를 폐기하는 경계를 적용했다. AI는 기존 검토 질문 선택만 제공하고 외부 전송 고지를 유지한다.
 
 작은 STOMP 클라이언트는 SimpleBroker가 지원하지 않는 receipt를 기다리지 않고, 세 고정 큐와 기존 애플리케이션 ack를 사용한다. 재접속·REST 복구·안정적인 요청 ID·제한된 메모리/페이지 수를 사용한다. Chrome renderer/CDP가 이 환경에서 실패하여 클릭/시각 E2E는 BLOCKED로 남겼다. 대신 실제 HTTP/WebSocket 서버에 배포용 JS 클라이언트를 연결한 테스트와 6개 화면에 대응하는 MockMvc 흐름을 실행한다. 이 검증을 실제 브라우저 클릭 PASS로 바꾸어 기록하지 않는다. 상세 범위·실행법은 web-ui.md와 test-status.md에 기록한다.
+
+# 2026-11-09 Oracle local connection configuration
+
+For the explicit `oracle` profile, load `bans_chatbot/oracle-local.properties` from the module working directory. The file is Git-ignored and carries `ORACLE_JDBC_URL`, `ORACLE_DB_USER`, and `ORACLE_DB_PASSWORD`; the committed `.example` has no usable credentials. `oracleIntegrationTest.cmd` accepts that file instead of requiring PowerShell environment-variable input and still supports the prior environment fallback. Startup retains the Oracle Thin URL and real connection guards; no schema or seed initialization is added.
+
+## 2026-11-09 Oracle first-admin demo decision
+
+The canonical seed keeps all accounts PENDING and contains no usable credential. To make the persistent Oracle UI demo possible, add a separate opt-in `oracle-bootstrap` application profile that activates only EMP-001 after an interactive operator password prompt. It checks the connected Oracle user/PDB, exact schema and seed shape, pending/sentinel state, and ACCOUNT_ADMIN role, then commits the password hash and metadata audit together. Repeated or mismatched runs fail closed. The ordinary Oracle profile does not invoke this bootstrap, and local-mock's environment password remains unrelated. A local-only HTTPS connector preserves the secure session cookie; the demo uses Mock AI until live-provider authorization is separately established. Details and outstanding validation are in oracle-ui-demo.md.
+
+The Oracle shell uses a read-only account check on page load to distinguish the pending first-admin state from normal sign-in. It renders a setup instruction and hides the login form until refresh after activation. This avoids a public account-creation or activation endpoint and keeps the setup password out of the rendered page and Git. The local-mock shell remains unchanged.
+
+The operator requested a Git-ignored local property instead of entering the first-admin password in PowerShell. On ordinary `oracle` startup, `OracleFirstAdminBootstrap` now reads `BANS_ORACLE_FIRST_ADMIN_PASSWORD` only when EMP-001 is still the fresh seeded PENDING account; the guarded transaction activates it once. Later startups ignore the property after the account is active. `oracle-it` excludes the runner, and the interactive profile remains an optional fallback. The property never appears in the committed example, SQL, HTTP response, or application logs. The initial setup page now explains the property and restart workflow.
+
+For the dedicated localhost synthetic demo only, an explicitly opted-in short initial password is permitted when the Oracle server binds to 127.0.0.1, HTTPS is enabled, Mock AI is selected, and the configured schema user is `BANS_CHAT`. This does not alter normal account activation's 12-character minimum. The user-supplied secret remains only in the Git-ignored local property and its hash in Oracle. A failed login now displays a credential error without clearing an anonymous page as an expired session. Versioned UI script URLs force the corrected client to load.
+
+## 2026-11-10 local demo account passwords
+
+The operator requested predictable passwords for all 12 existing synthetic Oracle login accounts. Provisioning was kept in the Git-ignored `bans_chatbot/demo-mock-data/` folder, separate from the canonical seed. The target is `employee_account.password_hash` (there is no profile password column). The running authentication service already uses salted BCrypt cost 10, so the local SQL uses matching BCrypt hashes rather than a bare SHA-256 digest. It activates only existing accounts in the dedicated `BANS_CHAT`/`FREEPDB1` synthetic schema, bumps credential/session versions on changes, clears failed-login locks, and writes metadata-only audit events. The checked-in seed still has no usable password; the normal activation policy is unchanged. These weak credentials are limited to the local demonstration.
+
+The password for each account is its own employee code without the hyphen (for example, `EMP-005` uses the corresponding `EMP005` demo password). The first assignment incorrectly used the account's ordinal among the 12 accounts; the local SQL and database were corrected, rotating the 10 affected hashes and session versions.
+
+The operator subsequently chose the three-digit suffix alone as the final local demo password (for example, `EMP-014` uses `014`). All 12 local hashes were rotated again. This later decision supersedes the prefixed-password mapping above; the checked-in seed still contains no usable password.
+
+The login failure reported for `emp001` was an identifier-format mismatch: the Oracle mapper searches the canonical `EMP-001`, while the login form allowed only uppercase codes with a hyphen. Login now normalizes case and an optional hyphen in the authentication service, and the form accepts the same formats. Password hashes and the account table do not change for this fix.
+
+## 2026-11-10 Oracle-only demo entry point
+Default application profile is now `oracle`; `scripts/local.ps1 -Action build` includes `-Poracle`, and `-Action run` delegates to the Oracle HTTP demo. The previous 8080 local-mock process was stopped. Test fixture adapters remain available only for the offline test harness and explicit `local-mock` test profile; normal tests do not connect to Oracle. The current demo URL is http://127.0.0.1:8080/.
+
+
+## Oracle-only 8080 demo (2026-11-10)
+
+2026-11-10: Removed the local-mock runtime profile. Oracle is the default and only demonstration persistence path. Offline tests use test and fixture-test profiles; their fixtures do not run in the Oracle application. Oracle HTTP binds to loopback port 8080; the TLS demo configuration is no longer imported.
+
+## 2026-11-10 saved local Gemini settings
+Use Git-ignored `bans_chatbot/.env` for the Gemini key and activation flags. Oracle configuration imports it from the module working directory; the run script selects `gemini-live` only when the saved provider is `gemini`. Keep the default Mock mode and fail-closed activation gates.
+
+## Consolidated local settings (2026-11-10)
+
+2026-11-10: Consolidated local Oracle and AI settings into Git-ignored `bans_chatbot/.env`. The Oracle profile imports only this file from the module working directory. The old Oracle local properties file was removed after exact key comparison and successful Oracle login.
+
+
+## Chat UI redesign (2026-11-10)
+
+2026-11-10: Chat UI was reorganized into a workplace messenger layout without changing the chat API, persistence, or authorization path. Message content is still inserted with textContent; conversation filtering uses the already loaded room list instead of a request per keystroke.

@@ -1,4 +1,27 @@
-# Architecture — STEP 02
+# Architecture — STEP 18 현재 구조
+
+현재는 Java 21/eGovFrame 5.0.0/Boot 3.5.6의 단일 Maven 모듈 `bans_chatbot`이다. 루트 bootstrap은 EgovBootApplication, 업무 코드는 도메인별로 둔다. 공용 shell은 Thymeleaf GET /와 정적 JS/CSS다. 아래 최신 표가 현재 구현이며 이 문서 뒤의 STEP별 설명은 당시 이력이다.
+
+| 도메인 | 현재 경로/책임 |
+|---|---|
+| auth | Spring Security 서버 세션/CSRF, BCrypt 로그인·활성화/관리자 발급, 매 HTTP/AI 호출의 현재 계정·역할·credentials version. Oracle 최초 관리자 bootstrap은 미구현. |
+| organization | 20명/5부서 합성 fixture, 공개 6필드 DTO/검색, 관리자 직원 생성·상태·부서, domain port와 Oracle MyBatis mapper. |
+| chat | 두 참여자만 허용하는 REST/순번/idempotency/read, 세 user queue의 STOMP, 현재 session 재검증·code-only 오류, 메모리/Oracle adapter. |
+| document | TEXT/제한 Markdown, 작성/버전/검토/명시적 manager 승인, owner/department/grant ACL, 현재 게시 검색/출처, 별도 externalSource 분류. |
+| ai | 기본 Mock/명시적 Gemini REST adapter, 고정 endpoint와 호출 제한, 5개 Mock-only 도구, 검토 질문·정형 DTO·정확한 문서 인용, OutboundDisclosurePolicy. |
+| audit | 인사·문서·AI 메타데이터, bounded memory와 Oracle mapper/adapter. 대화/키 저장 없음. Oracle 감사 내구성 미검증. |
+| common | 응답/오류/requestId/fixture reader와 private data 없는 공용 UI shell. |
+| global | profile/DataSource/MyBatis/MVC/Spring Security 구성, health. |
+
+요청 흐름은 세션 필터→현재 actor→Controller→domain service RBAC/ACL→port→선택한 adapter다. 모델/문서/클라이언트 caller는 권한 주체가 아니다. test/local-mock은 DataSource 자동 구성을 제외하고 nonpersistent adapter를 사용한다. oracle은 실제 Thin JDBC와 연결 확인이 필요하고 Mock fallback/자동 DDL/seed는 없다. oracle-it는 oracle과 함께 명시적 Failsafe에서만 사용한다.
+
+Oracle 전용 V001–V005와 manifest는 db/oracle, mapper Java/XML은 각 owning domain에 있다. V005 포함 현재 테이블은 18개다. runtime Oracle guard는 제품명 Oracle 확인까지만 수행하며 정확한 26ai Free banner/기능·락·영속성은 실제 IT/수락 체크리스트가 필요하다. eGov module smoke/SQL source parse는 Oracle 실행 증거가 아니다.
+
+AI 정형 조회는 모델을 쓰지 않는다. 문서 경로는 현재 externalSource+검토 intent→서버가 만든 단일 prompt→Mock 또는 명시적 live provider→exact quote 검사→최종 ACL/version 재검사다. previewTools는 여전히 Mock-only다. 서버는 SQL/쓰기/키를 AI에게 주지 않는다. 실제 인터넷 Gemini는 NOT_RUN이며 무료 계정/모델 확인을 별도 요구한다.
+
+단일 broker/세션 내 한도/500건 UI 등 제한은 [known-limitations.md](known-limitations.md), 설치·운영 분리는 [setup.md](setup.md)를 따른다. 실제 Oracle/Chrome/실 Gemini 포함 운영 검증은 완료되지 않았다.
+
+## 아래는 STEP 02–14 당시의 구조 이력
 
 Java base package: `egovframework.example`. `EgovBootApplication` remains at the scan root. Packages follow the owning domain, never a top-level technical layer.
 

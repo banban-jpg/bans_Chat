@@ -16,6 +16,8 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.HexFormat;
+import java.util.Locale;
+import java.util.regex.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 /** Authentication decisions use locked, fresh account rows; no password or code is logged. */
 @Service
 public class AccountAuthenticationService {
+    private static final Pattern EMPLOYEE_LOGIN_CODE = Pattern.compile("EMP-?[0-9]{3,10}");
     private static final int MAX_FAILURES = 5;
     private static final Duration LOCK_DURATION = Duration.ofMinutes(15);
     private static final Duration CODE_LIFETIME = Duration.ofHours(24);
@@ -78,7 +81,11 @@ public class AccountAuthenticationService {
 
     public AuthAccount login(String employeeCode, String password) {
         if (employeeCode == null || employeeCode.isBlank() || password == null) throw unauthorized();
-        LoginOutcome outcome = accounts.withLockedAccount(employeeCode, account -> {
+        String lookupCode = employeeCode.trim().toUpperCase(Locale.ROOT);
+        if (EMPLOYEE_LOGIN_CODE.matcher(lookupCode).matches() && lookupCode.charAt(3) != '-') {
+            lookupCode = "EMP-" + lookupCode.substring(3);
+        }
+        LoginOutcome outcome = accounts.withLockedAccount(lookupCode, account -> {
             if (account == null) {
                 passwords.matches(password, dummyHash);
                 return new LoginOutcome(null, false);

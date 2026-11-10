@@ -6,7 +6,7 @@ import java.util.*;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
-@Repository @Profile({"test","local-mock"})
+@Repository @Profile({"test"})
 public class InMemoryChatRepository implements ChatRepository {
  private static final class State {
   final DirectConversation room; long activity; final List<Message> messages=new ArrayList<>(); final Map<String,Long> read=new HashMap<>();

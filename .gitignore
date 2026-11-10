@@ -9,6 +9,10 @@
 **/target/
 /.maven-repo/
 
+# API 명세·테스트 결과 생성용 Python 도구의 실행 캐시
+__pycache__/
+*.py[cod]
+
 # 실행 로그와 임시 파일, JVM 진단 자료
 *.log
 logs/
@@ -19,6 +23,7 @@ logs/
 
 # 단계별 메모와 문제 해결 자료는 이 폴더에 모아 로컬에서만 관리
 /bans_chatbot/local-notes/
+/bans_chatbot/demo-mock-data/
 
 # 그 밖의 개인 메모와 일회성 작업 자료
 # 공용 docs/handoff.md, 설계 결정, API 계약, 검증 기록은 Git으로 계속 관리
@@ -39,6 +44,9 @@ logs/
 
 # 로컬 환경 설정과 비밀 정보
 .env
+/bans_chatbot/.env
+/bans_chatbot/oracle-local.properties
+/bans_chatbot/oracle-demo-ssl.properties
 .env.*
 !.env.example
 !.env.sample

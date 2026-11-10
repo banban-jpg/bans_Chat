@@ -19,7 +19,7 @@ import org.springframework.stereotype.Repository;
 
 /** Process-local, thread-safe fixture store. Restart loses all activation and login changes. */
 @Repository
-@Profile({"local-mock", "test"})
+@Profile({"test"})
 public class InMemoryAccountRepository implements AccountRepository {
     private final egovframework.example.organization.repository.OrganizationRepository organization;
 

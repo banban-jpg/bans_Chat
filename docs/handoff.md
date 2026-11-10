@@ -1,5 +1,72 @@
 # Handoff
 
+## STEP 19 최종 종합 점검 (2026-11-04 KST)
+
+현재 코드를 다시 조사하고 신규 업무기능/API정책/DDL/의존성 변경 없이 최종 검증했다. [RUNBOOK.md](RUNBOOK.md)→[API_ENDPOINTS.txt](API_ENDPOINTS.txt)→[TEST_RESULTS.md](TEST_RESULTS.md)→[FINAL_VERIFICATION_REPORT.md](FINAL_VERIFICATION_REPORT.md)를 신규 인수 경로로 사용한다. Oracle은 [별도 체크리스트](ORACLE_VERIFICATION_CHECKLIST.md)를 따른다.
+
+기본 wrapper clean test package **PASS19:17:23, 288선택=285PASS/3SKIP/실패0**, 별도 Mock부하·장애2PASS19:19:25. Controller HTTP39(JSON36+HTML3)를 source/runtime로 대조하고65실HTTP요청으로 전 매핑 정상응답과 일부negative를 확인했다. source확장자검사·로그증거이름 같은 검증 도구 누락만 수정했고 생산Java/DDL/POM 수정0이다. 신규 HTTP test/표준Python 생성기/공용5문서와 기존 문서 갱신이 STEP19 변경이다.
+
+남은 High: Oracle 첫관리자 보안초기화 미구현, 실DB검증 전부 BLOCKED. REST채팅fallback STOMP미발송·소스도메인 양방향 참조·payload상한/운영TLS/실Chrome/실Gemini 등은 보고서에 제안과 미검증으로 남겼다. 완성 퍼센트나 최종운영 준비완료를 선언하지 않는다. 기존 STEP16~18 미커밋 작업 보존, 커밋/배포/설치/SQL적용/원격모델호출0. 로그·raw evidence·개인메모는 ignored local-notes에만 둔다.
+
+## STEP 18 최종 인수인계 — 오프라인 버전 (2026-11-04)
+
+**인수 가능: 코드·오프라인 회귀·local-mock 시연 산출물. 인수 미완료: Oracle 포함 최종 기능·보안·성능·운영 준비.** dev / 88836b4에서 미커밋 STEP 16/17을 보존한 채 정리했다. Java 21/eGovFrame 5.0.0/Boot 3.5.6·모델·SDK·POM·운영 API/DDL/seed/Mapper는 STEP 18에서 바꾸지 않았다. 실제 Oracle/Gemini 호출은 0회다.
+
+신규 인수자는 README의 A 경로를 먼저 따른다. 현재 구조는 architecture/erd/security-policy 앞의 최신 절이 우선하며 이후 STEP 설명은 당시 이력이다. [setup.md](setup.md)에 Windows wrapper/기존 캐시/기동/계정 활성화/역할별 시연, [oracle-install-validation.md](oracle-install-validation.md)에 설치 전 승인·백업·전용 스키마·정확한 단계별 명령/gate/재실행 위험과 수락 조건, [known-limitations.md](known-limitations.md)에 차단/미구현을 모았다.
+
+STEP 18 수정 목록:
+
+- 루트 README.md, .env.example(값 없는 변수 이름만).
+- scripts/local.ps1(build/test/run), smoke-local.ps1(임시 포트 Mock/health/protected API/종료), verify-source.ps1(HEAD/index/worktree 제한 시크릿 패턴·문서 링크·source hash inventory).
+- performance/scripts/track-a.ps1, track-b.ps1의 **UTF-8 BOM 인코딩만** 보정해 Windows PowerShell 5의 한글 오독 방지. 부하/DB 동작 변경 없음.
+- test global/config/OracleConnectionOracleIT.java: JDBC major=26 가정을 Oracle26ai Free banner 확인으로 수정. 신규 OracleReleaseEvidenceTest.java 4 case. actual DB 실행 아님.
+- docs/setup.md, oracle-install-validation.md, known-limitations.md 신규; architecture/erd/security-policy/api-contract/decisions/gemini-free-tier/handoff/test-status/oracle-validation-backlog 현재화.
+
+수락 증거: scripts/local.ps1 build로 wrapper clean test package **PASS 18:46:50**, selected287 = **284 PASS/3 SKIPPED**, 실패·오류0, 실행 JAR. 핵심 MVC+실제 JS HTTP/STOMP 5건 **PASS 18:51:10**. Mock startup/health/root/static/protected401 smoke도 PASS 후 프로세스 종료. 선택적 Chrome·부하2 skip은 숨기지 않으며 부하 실험은 STEP 17에 별도 PASS로 남아 있다. 상세 실제 명령/초기 smoke FAIL/시크릿 검사 범위는 test-status.md를 따른다.
+
+이번에 확인한 중요 차단: **Oracle 최초 관리자 보안 bootstrap 미구현**. pending EMP-001 seed를 앱에서 자기 활성화할 수 없다. Oracle UI 전체 수락 전에 신원 확인/최소 권한/일회성/감사를 갖춘 초기화 구현·검증이 필요하다. dummy hash·provisionForTest·일괄 ACTIVE 우회는 금지한다. 26ai 제품명은 JDBC major26을 뜻하지 않으며 현재23.26 릴리스/Free edition을 실제 환경에서 증명해야 한다.
+
+Oracle 설치 후 migration/seed·제약/락·API 영속성·ACL·commit 후 STOMP·AI Oracle 검색(Mock)·부하·백업 복구가 실제26ai에서 모두 통과해야 DB 검증 완료로 바꾼다. 현재는 BLOCKED: ORACLE_26AI_NOT_INSTALLED. Chrome 클릭/모바일/키보드 paint는 환경 BLOCKED, 실 Gemini/SDK 및 배포/TLS/복구 drill은 NOT_RUN/대기다. 운영 확장 전 내부망/방화벽/프록시/비밀·로그 접근/백업 정책을 별도 검증한다.
+
+01~18 단계 산출물 인수인계는 이 상태로 마무리한다. 남은 작업을 삭제하거나 최종 운영 준비 완료로 선언하지 않는다. 변경은 미커밋이며 STEP16/17/18 코드·공용 문서를 함께 검토할 수 있다. 개인 메모·로그·metric·source inventory는 계속 ignored local-notes에만 둔다. 커밋/배포/Oracle 설치·변경/실 API 사용은 이번에 수행하지 않았다.
+
+## STEP 17 인수인계 (2026-11-04 KST)
+
+시작 시 STEP 16 파일이 미커밋 상태였으며 모두 보존했다. STEP 17은 performance/scripts와 테스트/문서만 추가·수정했고 운영 Java/SQL/DDL/프레임워크/프로필/모델을 바꾸지 않았다. 실 Oracle/Gemini 호출은 0회다. 실행 로그·raw metric·개인 메모는 기존 ignored local-notes에 모았다.
+
+STEP 17 파일 목록:
+
+- `performance/scripts/track-a.ps1`, `track-a.mjs`: 명시적 Mock 부하 runner/실제 HTTP·배포 JS STOMP·9 burst·metric 집계.
+- `performance/scripts/track-b.ps1`, `oracle-observe.sql`: 전용 Oracle 커밋 실험 gate/수동 read-only 자원 관측 SQL. 설치/중단/삭제 자동화 없음.
+- `bans_chatbot/src/test/java/egovframework/example/common/web/MockLoadExperimentTest.java`: ephemeral 12계정과 random password를 가진 명시적 테스트 서버/Node 실행.
+- `ai/provider/ProviderFailureExperimentTest.java`: 429/503/잘못된 JSON/timeout 3회씩·20시도 busy burst.
+- `ai/provider/LoopbackProviderFactory.java`: STEP 16의 기존 helper에 test timeout overload만 추가. 운영 endpoint 변경 아님.
+- `chat/service/MockConcurrencyRecoveryTest.java`: 30 worker duplicate/seq/read와 새 메모리 객체의 기록 손실을 명시하는 2개 기본 case.
+- `chat/mapper/ChatConcurrencyOracleIT.java`: 20 worker 독립 transaction의 10개 요청 키 경쟁/읽음. 실제 실행 BLOCKED.
+- 루트 docs/performance-and-failure.md와 decisions/api-contract/handoff/test-status/oracle-validation-backlog 갱신.
+
+최종 트랙 A runner **PASS 18:28:25**, 10/20/30 연결×3회, 최대 고유 직원 12명/연결 30개. HTTP 2763회, 의도한 오류 응답 45회(1.629%), 예상 밖 오류 0. 상대 실제 수신 180건과 REST 재접속 복구도 확인했다. 최종 표는 performance-and-failure.md를 따른다. 첫 PS runner는 Mockito stderr를 Stop 오류로 취급해 FAIL했으며 native stderr와 종료코드를 구분하도록 수정 후 실제 재실행했다.
+
+전체 기본 clean test package **PASS 18:30:41**, 124 main/71 test source, selected 283 = **280 PASS / 3 SKIPPED**, 실패·오류 0. skip은 Chrome opt-in 1과 별도 실행한 부하 실험 2다. 부하 2건의 PASS는 별도 실행 결과이며 정상 suite의 skip을 숨기지 않는다. Oracle IT 13개와 live smoke는 일반 suite 선택에서 제외한다.
+
+당시 다음 STEP 18은 DB 없는 기능/관측 범위에서 진행 가능했다. 최종 DB 통합·성능 검증은 완료가 아니다. Oracle race/승인/FK/lock/계획/중단·복구/리소스 실측, 장시간 포화/진짜 브라우저 paint/운영 SLA는 남는다. Oracle 설치 후 폐기 가능한 dedicated seed schema와 두 gate를 확인하고 track-b.ps1을 사용한다. 이 테스트는 커밋하며 자동 rollback/삭제가 아니다. 최신 STEP 18 결과는 이 문서 맨 위 절을 따른다.
+
+## STEP 16 인수인계 (2026-11-04 KST)
+
+진입은 깨끗한 dev / 88836b4. Java/프레임워크/Oracle/모델/SDK/POM/프로필/SQL/DDL/seed 변경 없음. 질문 경로에 명시적 OutboundDisclosurePolicy를 연결해 기존 externalSource의 현재 RBAC/ACL/게시 버전/분류 검사를 재사용한다. 미검토 intent는 전송하지 않는다. STOMP 변환 예외는 고정 CHAT_REQUEST_INVALID만 내보내도록 예방적으로 보강했다. 기존 ApiException 업무 코드는 유지한다.
+
+수정 목록(모듈의 egovframework/example 기준):
+
+- production: 신규 `ai/question/OutboundDisclosurePolicy.java`, 변경 `ai/question/AiQuestionService.java`, `chat/websocket/ChatStompController.java`.
+- test: 신규 `ai/provider/LoopbackProviderFactory.java`, `ai/question/OutboundSecurityRegressionTest.java`, `global/security/AttackRegressionMockMvcTest.java`, `document/mapper/SecurityAttackOracleIT.java`; 변경 `chat/websocket/ChatStompE2ETest.java`.
+- root docs: 신규 security-test-results.md; decisions/api-contract/handoff/test-status/oracle-validation-backlog 갱신.
+
+최종 wrapper clean test package **PASS 18:05:32**, selected 279 = **278 PASS / 1 SKIPPED**, 실패·오류 0, 124 main/67 test source와 실행 JAR. 추가 14 case가 실제 wire bytes/허용 여부/전송 0회, STOMP 불법 SEND/SUBSCRIBE/JSON 로그, MVC IDOR/revoke/부서 이동/비활성/세션 회전/입력/한도를 검사한다. 전체 51개 report로 확인. 처음 대상 테스트 setup FAIL은 test-status에 원인/수정/재실행을 보존했다. 스캔 인증이나 Oracle SQL 성공이 아니다.
+
+신규 Oracle IT는 기존 tagged JUnit/Failsafe 격리를 재사용한다. ORACLE_SECURITY_TEST=YES와 명시적 oracleIntegrationTest.cmd에서만 선택하며 총 Oracle IT 12개다. 실제 DB 미설치로 BLOCKED: ORACLE_26AI_NOT_INSTALLED. 다중 연결 revoke race/lock/commit·감사 내구성/실성능은 별도 TODO다. Chrome 클릭 환경 BLOCKED와 선택적 SKIPPED도 유지한다. 실제 Gemini/최신 SDK 실행/외부 scanner는 NOT_RUN이다.
+
+오프라인 관찰 범위에서 미해결 P0 0건이며 DB 없는 다음 STEP으로 진행 가능하다. Oracle 의존 P0가 미검증이므로 최종 보안 검증 완료/운영 준비 완료는 금지한다. STEP 17/18 구현은 시작하지 않았다. 실행 로그/개인 메모는 local-notes, 공용 보안 결과와 소스는 버전 관리한다. 변경은 미커밋 상태다.
+
 ## STEP 01
 
 The base server uses eGov 5.0.0 modules, Java 21, and Boot 3.5.6 through the eGov parent. Default profile is `local-mock`. The only endpoint is `/health`. No domain modules, security, repository, SQL, or Gemini integration have been added. Oracle 26ai Free is absent; keep its validation blocked until the server is installed and explicitly configured.
@@ -296,3 +363,52 @@ Chrome 실제 클릭 테스트는 GPU/CDP 환경 문제로 BLOCKED다. 정상 �
 다음 STEP은 이 오프라인 검증 범위에서 진행할 수 있다. 실제 클릭 UX·반개방 소켓·장시간/500건 초과 이력·다중 사용자 실성능·Oracle 권한/트랜잭션·실 Gemini E2E는 완료 조건으로 남긴다. 최종 완성/운영 준비 완료를 선언하지 않는다. 새 서버 API와 UI 모두 existing RBAC/ACL/current-source 경계를 유지해야 한다.
 
 최종 STEP 15 gate: **2026-11-04 17:38:32 KST clean test package PASS**, 123 main/63 test source, selected 265 = **264 PASS + 1 SKIPPED**, 실패·오류 0. fresh Surefire 49개 report와 일치한다. 최종 JAR localhost 39개 경로 smoke **PASS 17:40:51**, 프로세스 종료 확인. 브라우저의 앞선 4회 FAIL과 현재 환경 BLOCKED를 정상 suite의 SKIPPED와 별도로 보존했다. 로그는 모두 local-notes, 수정 파일은 미커밋이다.
+
+# 2026-11-09 Oracle local properties handoff
+
+The Oracle profile now imports optional `bans_chatbot/oracle-local.properties` from the module working directory; `.gitignore` excludes the actual file. A credential-free example is present, and `oracleIntegrationTest.cmd` now accepts the file with an environment-variable fallback. The local file was created with blank account/password fields. The operator must enter their own DB values. No real Oracle connection or seed execution was attempted for this change.
+
+## 2026-11-09 Oracle demo seed handoff
+
+After the operator configured the dedicated `FREEPDB1` schema, `OracleConnectionOracleIT` passed. The canonical 216-statement synthetic seed was then applied once through a local ignored JDBC runner with preflight, a single transaction, pre-commit validation, and post-commit verification. SQL*Plus did not successfully run the wrapper due local client connection errors; no rows changed in those attempts. The committed seed has 20 employees, 12 PENDING accounts and 20 documents with the expected related rows. The first-administrator activation gap remains, and no live Gemini call was made.
+
+## 2026-11-09 Oracle UI demo handoff
+
+The first-administrator gap is addressed in code by an opt-in, interactive `oracle-bootstrap` profile with strict schema/PDB/seed checks and a one-transaction activation/audit operation. A local PowerShell runbook builds the Oracle JAR, generates a Git-ignored localhost TLS certificate and settings, and starts the Oracle UI with Mock AI. The HTTPS login page and CSRF endpoint were checked against the live configured Oracle profile, but the operator has not entered an administrator password, so EMP-001 is still PENDING and Oracle login/full UI are **NOT_RUN**. Follow [oracle-ui-demo.md](oracle-ui-demo.md); never copy the local-mock password into the Oracle seed.
+
+The public Oracle landing page now detects the pending first administrator and shows the one-time setup instruction while hiding the login form. The change was verified by live HTTPS `GET /`; full `-Poracle test package` passed 290 tests with 3 skipped and no failures/errors. No administrator password was set. The demo server was stopped after verification, following the operator's earlier request.
+
+The first-admin setup instruction now points to Git-ignored `bans_chatbot/oracle-local.properties` rather than a PowerShell password prompt. An ordinary Oracle startup activates the fresh seeded EMP-001 only when `BANS_ORACLE_FIRST_ADMIN_PASSWORD` is configured; a later startup leaves the active account alone. The property key is present but empty in the local file, awaiting an operator-selected value. The 2026-11-09 full ordinary suite passed 293 tests with 3 skipped and no failures/errors; the live pending-account landing page returned HTTP 200 with property guidance and a hidden login form. No activation/login was performed, and port 8443 was closed after the check.
+
+## 2026-11-10 first-admin login repair
+
+The operator entered a four-character value in the Git-ignored local property. Oracle startup initially failed the 12-character check; the UI mislabeled a login 401 as session expiration. A local-demo-only short-password opt-in now requires loopback HTTPS, Mock AI, and the `BANS_CHAT` schema. General account activation still requires at least 12 characters. The first configured Oracle startup activated EMP-001, and HTTPS login plus `/api/auth/me` returned the admin role and Secure cookie; login passed again after restart. The UI client now treats login 401 as credential failure and versioned asset URLs prevent stale script use. Full ordinary tests passed 295 with 3 skipped; focused repackage passed after stopping a running JAR lock. No second-user or complete browser UI flow was run.
+
+## 2026-11-10 demo account handoff
+
+The 12 existing Oracle accounts now use the three-digit suffix of their employee codes as local demo passwords (for example, `EMP-014` uses `014`). The ignored `bans_chatbot/demo-mock-data/README.txt` contains the exact login mapping, `activate_demo_accounts.sql` contains the guarded BCrypt updates, and `verify_demo_accounts.sql` contains read-only checks. A local JDBC helper applied the final update to `BANS_CHAT` in `FREEPDB1`; all 12 accounts are ACTIVE and all 12 final password checks passed. The earlier ordinal and prefixed mappings have been superseded. No web server was started. The prior `BANS_ORACLE_FIRST_ADMIN_PASSWORD` setting is no longer needed for an already ACTIVE EMP-001; its one-time bootstrap skips the account. For SQLcl/SQL*Plus use `@demo-mock-data/activate_demo_accounts.sql` from the module directory after connecting to the dedicated schema. In DBeaver execute the entire file as a script on that connection. The canonical seed verification that expects PENDING accounts is a pre-activation check; use the local demo verification file after provisioning.
+
+The reported `emp001`/`001` sign-in failure was caused by the login form and account lookup requiring canonical `EMP-001`. The login service and form now accept `emp001`, `EMP001`, or `EMP-001`; the service looks up `EMP-001`. A focused MockMvc suite passed and the executable Oracle-profile JAR was rebuilt without starting it. The operator must start that new JAR under the Oracle profile on their chosen port; port 8080 under `local-mock` uses separate ephemeral accounts and does not use these Oracle passwords. Live HTTP sign-in with the rebuilt JAR remains untested because the operator requested that the assistant never start the server.
+
+## 2026-11-10 Oracle-only demo entry point
+Default application profile is now `oracle`; `scripts/local.ps1 -Action build` includes `-Poracle`, and `-Action run` delegates to the Oracle HTTP demo. The previous 8080 local-mock process was stopped. Test fixture adapters remain available only for the offline test harness and explicit `local-mock` test profile; normal tests do not connect to Oracle. The current demo URL is http://127.0.0.1:8080/.
+
+
+## Oracle-only 8080 demo (2026-11-10)
+
+2026-11-10 current runtime: http://127.0.0.1:8080/ serves the Oracle-backed application. The previous 8443 server is stopped. The local-mock profile was removed from application code and tests; test and fixture-test remain for ordinary offline tests. The pre-existing oracle-demo-ssl.properties file is ignored by the application.
+
+## 저장형 Gemini 설정 (2026-11-10)
+
+실제 키는 Git 제외 파일 `bans_chatbot/.env`의 `GOOGLE_API_KEY=` 뒤에 저장한다. 이 파일은 Oracle 프로필이 모듈 작업 디렉터리에서 자동 읽는다. `.env.example`에는 실제 키를 쓰지 않는다. 기본 `bans.ai.provider=mock`에서는 키가 있어도 외부 호출이 없다.
+
+실제 Gemini를 켜려면 본인의 프로젝트 무료 티어, 모델 접근과 외부 전송 조건을 확인한 뒤 같은 `.env`에서 `bans.ai.provider=gemini`, `bans.ai.model=gemini-2.5-flash-lite`, `bans.ai.external-transfer-acknowledged=true`, `bans.ai.free-tier-confirmed=true`로 지정한다. 기존 서버를 종료하고 `./scripts/local.ps1 -Action run`으로 다시 시작한다. 스크립트는 `gemini` 설정일 때 `oracle,gemini-live` 프로필을 선택한다. 키와 조건이 없거나 잘못되면 시작에 실패한다. 자유 입력 AI 채팅은 구현되어 있지 않고 검토된 가상 질문만 처리한다.
+
+## Consolidated local settings (2026-11-10)
+
+2026-11-10: `bans_chatbot/.env` now contains the migrated Oracle connection settings and the AI settings. It is Git ignored. The legacy `oracle-local.properties` was removed after live HTTP 8080 login and employee query passed from the consolidated file. The Gemini key remains blank and real Gemini is NOT_RUN.
+
+
+## Chat UI redesign (2026-11-10)
+
+2026-11-10: Chat screen redesign is deployed in the Oracle JAR on loopback port 8080. IDs used by existing API/STOMP handlers are preserved. Desktop and narrow-screen CSS are included. Browser screenshot inspection was blocked by an unavailable browser access host; live HTTP and focused tests passed.

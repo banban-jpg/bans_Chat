@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.*;
 
 /** Real headless browser, real local server, synthetic in-memory services and Mock Gemini only. */
 @SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("local-mock") @DirtiesContext
+@ActiveProfiles({"test", "fixture-test"}) @DirtiesContext
 class WorkbenchBrowserTest {
     @LocalServerPort int port;
     @Autowired InMemoryAccountRepository accounts;

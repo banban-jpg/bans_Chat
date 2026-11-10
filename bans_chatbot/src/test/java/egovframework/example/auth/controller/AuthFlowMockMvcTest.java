@@ -60,6 +60,19 @@ class AuthFlowMockMvcTest {
     }
 
     @Test
+    void loginAcceptsEmployeeCodeWithOrWithoutHyphenRegardlessOfCase() throws Exception {
+        String password = randomPassword();
+        accounts.provisionForTest("EMP-001", passwords.encode(password));
+        for (String employeeCode : new String[] {"EMP-001", "EMP001", "emp-001", "emp001"}) {
+            CsrfSession browser = browser();
+            mvc.perform(send(post("/api/auth/login"), browser,
+                            Map.of("employeeCode", employeeCode, "password", password)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.employeeCode").value("EMP-001"));
+        }
+    }
+
+    @Test
     void activationIsOneUseAndLoginLogoutMeUseRealSessionChain() throws Exception {
         provisionAdmin();
         String code = service.issueActivation(admin(), "EMP-002");

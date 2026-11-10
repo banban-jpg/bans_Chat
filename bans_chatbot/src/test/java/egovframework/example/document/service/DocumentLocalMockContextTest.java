@@ -8,7 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import static org.assertj.core.api.Assertions.*;
 
-@SpringBootTest @ActiveProfiles("local-mock")
+@SpringBootTest @ActiveProfiles({"test", "fixture-test"})
 class DocumentLocalMockContextTest {
  @Autowired DocumentSearchService search;
  @Test void processLocalFixtureProvidesVacationEvidenceWithoutOracle(){

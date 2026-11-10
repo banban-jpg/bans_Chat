@@ -1,5 +1,29 @@
 # API contract
 
+## STEP 19 현재 매핑 전수 확인
+
+현재 source annotation과 runtime mapping39개를 대조했다. JSON REST36(GET15/POST16/PUT2/PATCH2/DELETE1), HTML3(GET3)이며 MVC 전체GET18이다. 정적4개와 WS/STOMP6개는 별도다. `/api/demo/employees`는 local-mock에만 존재한다. 경로/DTO/인증 계약 변경은 없다.
+
+[API_ENDPOINTS.txt](API_ENDPOINTS.txt)에 method/고유ID/도메인/현재권한·CSRF/입출력 검증/실제 HTTP 관측 상태/구현 파일·줄을 정리했다. 신규 FinalApiHttpVerificationTest로39매핑 모두 정상 loopback HTTP 응답과 일부 security negative를 실행했다. 모든 경우의 브라우저·Oracle 검증이 완료됐다는 뜻은 아니다. 상세는 [최종 보고서](FINAL_VERIFICATION_REPORT.md).
+
+## STEP 18 최종 계약 읽기 기준
+
+운영 REST/STOMP/DTO 변경 없음. 현재 39개 MVC method/path와 정확한 4개 UI 정적 자산을 사용한다. 뒤의 날짜별 section은 당시 계약 변화이며 최신 section과 현재 source가 우선한다. 공용 GET /에 private data를 넣지 않고, 실제 세션/역할·자원 ACL을 매 도메인 서비스에서 확인한다. 초기 /api/auth/activation 예약 표현의 실제 구현 경로는 /api/auth/activate다.
+
+운영 모드 차이/기동 명령은 [setup.md](setup.md), Oracle 환경·gate·재실행 위험·수락 기준은 [oracle-install-validation.md](oracle-install-validation.md), 구현되지 않은 Oracle 첫 관리자와 나머지 경계는 [known-limitations.md](known-limitations.md)를 따른다. 로그/AI raw transcript 저장 API나 그룹채팅·임의 SQL·권한 부여 도구는 없다. Oracle 포함 최종 기능 검증은 아직 BLOCKED다.
+
+## STEP 17 동시성·복구 관측 (2026-11-04)
+
+운영 REST/STOMP 경로·DTO·SQL 계약 변경은 없다. Mock 부하에서 동일 직원 쌍의 room 재사용, sender/request ID 중복 저장 1건, 읽음 위치 단조 증가, 승인 경쟁의 200/409, grant/revoke/부서 이동/비활성 후 기존 권한 재검사를 실행했다. 연결 중단 중 저장된 메시지는 기존 REST cursor로 복구한다. REST 저장은 별도 STOMP publish를 보장하지 않으므로 누락 복구를 사용한다.
+
+503/429/cooldown/timeout/JSON 오류와 provider busy는 loopback 모의 서버에서 검사했다. 모델 자동 재시도 0회 정책과 UI 재접속 최대 5회 정책을 유지한다. 실제 브라우저 paint는 이번 측정 범위가 아니다. 성능 수치/실험 명령/Oracle 실측 대기는 performance-and-failure.md를 따른다. Mock 동시 연결 성공은 Oracle 처리량 보장이 아니다.
+
+## STEP 16 보안 회귀 계약 (2026-11-04)
+
+REST 경로/DTO/Oracle SQL은 변경하지 않는다. STOMP의 업무 ApiException은 기존 code-only chat.errors 계약을 유지한다. 추가로 JSON 변환 등 그 밖의 Exception은 `/user/queue/chat.errors`에 `{code:"CHAT_REQUEST_INVALID"}`만 반환하며 원문·예외 상세·세션 ID를 보내거나 새 코드에서 로깅하지 않는다. 불법 destination은 기존 protocol ERROR 경로로 거부한다.
+
+질문 outbound는 명시적인 OutboundDisclosurePolicy가 검토된 intent와 기존 현재 외부 반출 source 판정을 연결한다. 외부 허용 플래그가 없는 내부 읽기 가능 문서는 여전히 내부 API에서만 읽을 수 있으며 Gemini로 보내지 않는다. 실제 policy/loopback byte 비교는 보안 보고서를 따른다. 새 URL/유료 전환/임의 도구/SQL 실행 경로는 없다.
+
 ## STEP 01 compatibility
 
 `GET /health` returns HTTP 200 and `{"status":"UP"}`. It is a process health probe only.
@@ -35,6 +59,8 @@ This section supersedes the historical STEP 03 reserved `/api/auth/activation` p
 1. `GET /api/auth/csrf` returns `200 {"data":{"headerName":"X-CSRF-TOKEN","token":"..."}}` and establishes the session carrying that token. The browser must retain the session cookie and send the token in the named header on **every POST**, including anonymous activation and login. A missing or incorrect token returns `403 FORBIDDEN` in the common error envelope. Never log or persist this token.
 2. `POST /api/auth/activate` accepts `{"employeeCode":"EMP-002","code":"<one-use code>","newPassword":"<12-128 characters>"}`. A valid pending, active employee and unexpired code yield `200 {"data":{"activated":true}}`. An invalid, expired, reused, superseded, or ineligible activation yields `409 ACTIVATION_CONFLICT` with fixed public text. Invalid JSON/field length yields `400 VALIDATION_FAILED`. The response never contains the activation code or password hash.
 3. `POST /api/auth/login` accepts `{"employeeCode":"EMP-002","password":"..."}` and returns `200 {"data":{"employeeCode":"EMP-002","departmentCode":"D01","roles":["EMPLOYEE"]}}` for a valid active account. The server rotates the session ID, saves the Spring Security context, and sets the configured idle timeout (default 1800 seconds). Wrong credentials, unknown code, or inactive credentials yield `401 AUTH_REQUIRED`; the fifth wrong attempt and requests during the 15-minute lock yield `429 RATE_LIMITED`. Public errors do not identify which condition applied.
+
+   Login also accepts the same employee code without the hyphen and in either case, such as `emp001` or `EMP001`. The service resolves these to the canonical `EMP-001` before account lookup and returns the canonical code. This normalization applies to login only; activation and other employee-code fields retain their existing format.
 4. `GET /api/auth/me` returns the same current identity view under `data` for a valid session. Missing, disabled, or credential-version-stale sessions return `401 AUTH_REQUIRED`; the stale session is invalidated. Roles are loaded from the account repository at request time, not trusted from the old session.
 5. `POST /api/auth/logout` requires a valid session and CSRF token. It invalidates that session and returns `200 {"data":{"loggedOut":true}}`. A following `/api/auth/me` returns 401.
 
@@ -184,3 +210,16 @@ The repackaged local-mock server was also checked over actual loopback HTTP for 
 기존 REST/STOMP payload와 Oracle SQL은 변경하지 않았다. 클라이언트는 기존 세 사용자 큐를 구독하며 STOMP receipt는 요구하지 않는다. 재연결 시 최근 50건씩 최대 10페이지를 읽고 순번으로 합친다. 화면 메모리는 500건으로 제한한다. 불확실한 전송은 같은 clientRequestId로 한 번 REST 확인하며 새 ID로 자동 재발송하지 않는다. 실시간 연결과 AI 실패는 별개다.
 
 현재 MVC 등록 목록은 39개 method/path 쌍이며, 정적 자산 네 개는 MVC 컨트롤러 목록과 별도로 검증한다. 이전 37개 검증은 당시 기록이다. 웹 UI가 보여주는 401/403/429/503/504 문구와 실제 검증 한계는 web-ui.md를 따른다.
+
+2026-11-10 demo runtime: default profile `oracle`; use `http://127.0.0.1:8080/` after the Oracle build and local configuration. The old `http://localhost:8080/` local-mock UI is not the supported demo entry point.
+
+
+## Oracle-only 8080 demo (2026-11-10)
+
+2026-11-10 runtime: Oracle is the default demonstration profile at http://127.0.0.1:8080/. Session cookie Secure is false for this loopback HTTP mode. The local-mock runtime profile and 8443 TLS import were removed.
+
+2026-11-10: Saving a key in `bans_chatbot/.env` does not change the HTTP API contract. The AI question UI remains a reviewed-example selector; Gemini activation requires explicit saved flags and a server restart.
+
+## Consolidated local settings (2026-11-10)
+
+2026-11-10 local runtime configuration: Oracle connection and AI activation properties are read from `bans_chatbot/.env`; HTTP routes and response shapes are unchanged.

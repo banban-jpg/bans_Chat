@@ -13,7 +13,7 @@ import static org.mockito.Mockito.*;
 class DocumentSearchServiceTest {
  private SessionActor actor(String id,String department,SecurityRole... extra){var roles=new HashSet<SecurityRole>();roles.add(SecurityRole.EMPLOYEE);roles.addAll(List.of(extra));return new SessionActor(id,department,AccountStatus.ACTIVE,roles);}
  @Test void syntheticVacationDeploymentAclRevokeAndSourceVersion() {
-  var env=new MockEnvironment();env.setActiveProfiles("local-mock");
+  var env=new MockEnvironment();env.setActiveProfiles("fixture-test");
   var store=new InMemoryDocumentWorkspace(env);var accounts=mock(AccountRepository.class);
   var docs=new ManagedDocumentService(store,accounts);
   var search=new DocumentSearchService(new InMemoryDocumentSearchRepository(store),store,docs);

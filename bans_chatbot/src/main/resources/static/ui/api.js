@@ -15,7 +15,7 @@ export function createApi(onExpired){
     try{response=await fetch(path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(15000)});}
     catch{throw new ApiError(0);}
     if(requestVersion!==version)throw new ApiError(0);
-    if(!response.ok){if(response.status===401){csrf=undefined;onExpired();}if(response.status===403)csrf=undefined;throw new ApiError(response.status);}
+    if(!response.ok){if(response.status===401){csrf=undefined;if(path!=='/api/auth/login')onExpired();}if(response.status===403)csrf=undefined;throw new ApiError(response.status);}
     const result=await response.json();if(requestVersion!==version)throw new ApiError(0);return result.data;
   }
   return {request,reset(){version++;csrf=undefined;},async csrf(){csrf=await request('/api/auth/csrf');return csrf;}};

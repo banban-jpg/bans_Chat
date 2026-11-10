@@ -148,6 +148,7 @@
 				<configuration>
 					<excludes><exclude>**/*OracleIT.java</exclude><exclude>**/*LiveSmokeIT.java</exclude></excludes>
 					<excludedGroups>oracle-integration | gemini-live</excludedGroups>
+					<systemPropertyVariables><spring.profiles.active>test</spring.profiles.active></systemPropertyVariables>
 				</configuration>
 			</plugin>
 			<plugin>

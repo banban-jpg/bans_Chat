@@ -1,5 +1,7 @@
 # STEP 12 — Gemini Developer API 준비와 외부 호출 경계
 
+STEP 18 재확인(2026-11-04): 공식 가격·지원 지역·프로젝트 한도·폐기 일정을 다시 읽었다. 이전 STEP 16에서 실패했던 폐기 일정 조회는 이번에는 성공했다. 현재 공식 안내는 Flash의 폐기/2026-12-01 자동 라우팅을 명시하며 lite는 추가 공지까지 유지하지만 과거 사용 계정 중심의 접근 제한이 있다. 따라서 설정 allowlist/SDK를 바꾸지 않고 실제 계정 Free tier·결제·모델 접근을 호출 직전에 별도로 확인한다. 모델 ID만으로 무료/접근을 보장하지 않는다. STEP 18 실 호출은 NOT_RUN이다. 단일 합성 인사말 smoke는 [setup.md](setup.md)의 별도 허가/gate 절차만 사용하며 웹 live 모드를 켜는 절차와 구분한다.
+
 검토일: **2026-11-04 KST**. 기본값은 키가 필요 없는 Mock이다. 이 문서는 모델의 영구적인 무료 제공이나 특정 계정의 이용 가능성을 보증하지 않는다. 실제 Gemini 호출은 이번 STEP에서 **NOT_RUN, 0회**다.
 
 ## 공식 정보와 모델 선택
@@ -39,7 +41,7 @@ STEP 03 `AiDisclosurePolicy`와 `QuestionSafetyReview`, STEP 11의 검색/출처
 | `bans.ai.model` | 빈 값. 실 Provider에서 정확히 `gemini-2.5-flash-lite`를 명시해야 한다. |
 | `bans.ai.external-transfer-acknowledged` | `false`; 합성·비민감 입력 및 질문의 외부 전송 고지를 확인한 후만 true. |
 | `bans.ai.free-tier-confirmed` | `false`; 프로젝트 무료 티어·모델·한도 확인 후만 true. |
-| `GOOGLE_API_KEY` | 실 모드에서만 읽는다. 환경 변수 또는 Git 제외 로컬 설정에 주입하며 명령 인자·공유 파일에 키를 붙이지 않는다. `.env.example`은 자동 로드되지 않는다. |
+| `GOOGLE_API_KEY` | 실 모드에서만 읽는다. Git 제외 `bans_chatbot/.env`에 저장하며 명령 인자·공유 파일에 키를 붙이지 않는다. `.env.example`은 자동 로드되지 않는다. |
 | `bans.ai.max-output-tokens` | 256; 1–512. 단일 후보·텍스트 응답만 요청한다. |
 | `bans.ai.max-concurrent` | 1; 1–2. 대기열 없이 즉시 거절한다. |
 | `bans.ai.requests-per-minute` | 2; 1–10. 최근 60초 슬라이딩 윈도. |
@@ -88,3 +90,9 @@ $env:BANS_GEMINI_TRANSFER_ACKNOWLEDGED = 'YES'
 ## STEP 15 화면 연결
 
 2026-11-04 Google 공식 가격·지원 지역·폐기 일정·프로젝트 한도를 다시 확인했다. UI 작업에서 모델/SDK/무료 티어 정책은 변경하지 않았다. 실 계정의 모델 접근/무료 quota 성공 및 실 API는 NOT_RUN이다. 새 통합 화면도 검토된 가상 질문 선택·기본 Mock이며 질문 원문이 무료 Gemini로 전송될 수 있음과 실제 개인정보·기밀 입력 금지를 명시한다. 브라우저 자산에는 키나 Google API endpoint가 없다. 외부 호출은 기존 백엔드 gate를 충족해야만 가능하며, UI 표시/체크박스는 임의 질문을 외부 적격으로 만드는 근거가 아니다. Chrome 클릭 검증의 환경 제약과 실제 오프라인 검증은 web-ui.md/test-status.md를 따른다.
+
+## 저장형 Gemini 설정 (2026-11-10)
+
+실제 키는 Git 제외 파일 `bans_chatbot/.env`의 `GOOGLE_API_KEY=` 뒤에 저장한다. 이 파일은 Oracle 프로필이 모듈 작업 디렉터리에서 자동 읽는다. `.env.example`에는 실제 키를 쓰지 않는다. 기본 `bans.ai.provider=mock`에서는 키가 있어도 외부 호출이 없다.
+
+실제 Gemini를 켜려면 본인의 프로젝트 무료 티어, 모델 접근과 외부 전송 조건을 확인한 뒤 같은 `.env`에서 `bans.ai.provider=gemini`, `bans.ai.model=gemini-2.5-flash-lite`, `bans.ai.external-transfer-acknowledged=true`, `bans.ai.free-tier-confirmed=true`로 지정한다. 기존 서버를 종료하고 `./scripts/local.ps1 -Action run`으로 다시 시작한다. 스크립트는 `gemini` 설정일 때 `oracle,gemini-live` 프로필을 선택한다. 키와 조건이 없거나 잘못되면 시작에 실패한다. 자유 입력 AI 채팅은 구현되어 있지 않고 검토된 가상 질문만 처리한다.

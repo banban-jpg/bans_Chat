@@ -14,7 +14,7 @@ public class GeminiProviderConfiguration {
     public ChatProvider chatProvider(GeminiSettings settings, Environment environment) {
         if ("mock".equals(settings.provider())) return new MockGeminiProvider();
         if (!environment.acceptsProfiles(Profiles.of("gemini-live"))
-                || environment.acceptsProfiles(Profiles.of("test", "local-mock", "oracle-it"))) {
+                || environment.acceptsProfiles(Profiles.of("test", "oracle-it"))) {
             throw new IllegalStateException("AI_LIVE_PROFILE_REQUIRED");
         }
         settings.requireLiveReady();

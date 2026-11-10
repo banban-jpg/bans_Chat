@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 /** Deterministic process-local search. It is not evidence of Oracle SQL behavior. */
-@Repository @Profile({"test","local-mock"})
+@Repository @Profile({"test"})
 public class InMemoryDocumentSearchRepository implements DocumentSearchRepository {
  private final DocumentWorkspace workspace;
  public InMemoryDocumentSearchRepository(DocumentWorkspace workspace){this.workspace=workspace;}

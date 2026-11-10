@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 
 /** Synthetic fixture only; never a persistent repository. */
 @Repository
-@Profile({"local-mock", "test"})
+@Profile({"test"})
 public class InMemoryEmployeeDirectory implements EmployeeDirectory {
     private final List<Employee> employees = SyntheticOrganizationFixture.employees();
 

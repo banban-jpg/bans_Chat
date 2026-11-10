@@ -14,7 +14,7 @@ class ProviderConfigurationTest {
     }
 
     @Test void missingKeyAndAnAmbientKeyBothKeepDefaultOffline() {
-        for (String profile : new String[]{"test", "local-mock", "oracle"}) {
+        for (String profile : new String[]{"test", "oracle"}) {
             runner.withPropertyValues("spring.profiles.active=" + profile).run(context -> {
                 assertThat(context).hasNotFailed().hasSingleBean(ChatProvider.class);
                 var provider = context.getBean(ChatProvider.class);
@@ -29,7 +29,7 @@ class ProviderConfigurationTest {
     @Test void liveRequiresProfileAcknowledgementsModelAndKey() {
         runner.withPropertyValues("bans.ai.provider=gemini").run(context ->
                 assertThat(context).hasFailed());
-        for (String profile : new String[]{"test,gemini-live", "local-mock,gemini-live", "oracle-it,gemini-live"}) {
+        for (String profile : new String[]{"test,gemini-live", "oracle-it,gemini-live"}) {
             ready().withPropertyValues("spring.profiles.active=" + profile).run(context -> assertThat(context).hasFailed());
         }
         for (String missing : new String[]{"bans.ai.external-transfer-acknowledged=false", "bans.ai.free-tier-confirmed=false",

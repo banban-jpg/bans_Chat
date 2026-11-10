@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 /** Offline demonstration adapter; it never opens a network connection. */
 @Component
-@Profile({"local-mock", "test"})
+@Profile({"test"})
 public class MockGeminiClient implements AiAnswerPort {
     @Override
     public String answerSyntheticQuestion(String syntheticQuestion) {

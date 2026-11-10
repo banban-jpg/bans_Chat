@@ -14,7 +14,7 @@ import org.springframework.test.context.ActiveProfiles;
 import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("local-mock") @DirtiesContext
+@ActiveProfiles({"test", "fixture-test"}) @DirtiesContext
 class WorkbenchClientIntegrationTest {
     @LocalServerPort int port;
     @Autowired InMemoryAccountRepository accounts;

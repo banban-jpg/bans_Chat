@@ -1,4 +1,18 @@
-# STEP 03 security policy
+# Security policy — STEP 18 현재 정책
+
+현재 보안 경계는 Spring Security 서버 세션과 현재 계정 재조회다. 초기 MVC interceptor는 trusted request actor를 소비하는 추가 검사로 통합됐으며 단독 인증 수단이 아니다. 아래 최신 정책이 우선하고 뒤의 STEP별 설명은 당시 이력이다.
+
+- 익명 GET은 /, health 두 경로, CSRF API, 정확한 네 UI 자산이다. POST activate/login도 공개지만 CSRF가 필요하다. 나머지 요청은 활성 EMPLOYEE 세션이 필요하며 domain RBAC/ACL이 추가된다. 전체 /ui/**를 공개하지 않는다.
+- ACCOUNT_ADMIN은 직원/코드 발급만 관리하며 문서 ACL 우회/자기 승인 권한이 없다. DOCUMENT_MANAGER만 배정 검토자+READ/APPROVE 조건에서 승인한다. 소유자 자기 승인은 거부한다. AUDITOR는 문서 우회나 아직 없는 감사 조회 UI를 의미하지 않는다.
+- 세션 고정 방지, HttpOnly/SameSite 쿠키, 현재 credentials version/status/department 검사와 STOMP CONNECT CSRF/origin/user queue 제한을 유지한다. account/grant/department 변경을 캐시된 과거 권한으로 우회하지 않는다. 동시 final-check 이후 Oracle race는 미검증이다.
+- AI는 검토된 가상 질문과 현재 승인/게시/외부 허용/합성/비민감 구간만 사용한다. 사용자 질문도 외부에 갈 수 있음을 명시한다. regex masking/클라이언트 synthetic 주장/모델 출력은 허가 근거가 아니다. AI 질문·초안·키를 DB/로그에 저장하지 않는다. API는 검증된 일시적인 사실/인용 DTO를 반환한다.
+- 모든 UI 동적 출력은 textContent/허용 요소이며 HTML/Markdown 지시는 실행하지 않는다. CSRF/같은 origin/메뉴 외 서버 인가를 유지한다. 에러는 고정 code/message, STOMP conversion 예외는 CHAT_REQUEST_INVALID다. debug/wire/HTTP body/JDBC bind 로그는 비밀·질문·세션을 노출할 수 있어 켜지 않는다.
+- local-mock은 127.0.0.1 기본/비영속이고 관리자 비밀번호는 실행 중 환경으로만 공급한다. oracle 쿠키는 Secure다. 운영 확장에는 TLS·인증서·내부망·방화벽/프록시 신뢰·계정 분리·비밀 교체·로그 접근/보관 정책이 필요하며 이번에 검증되지 않았다.
+- Oracle 최초 관리자 bootstrap/실 DB 보안/백업 복구/외부 scanner/실 Gemini/실제 Chrome 클릭 검증은 완료되지 않았다. 검증 결과의 PASS/FAIL/SKIPPED/BLOCKED/NOT_RUN을 구분한다. Git 비밀 패턴 검사는 제한된 검사이며 전체 보안 인증이 아니다.
+
+현재 기준과 공개 API는 [api-contract.md](api-contract.md), 실제 공격 case는 [security-test-results.md](security-test-results.md), 미검증 범위는 [known-limitations.md](known-limitations.md)를 따른다.
+
+## 아래는 STEP 03 이후 정책 변화 이력
 
 The server identity is an authenticated employee ID, department code, current account status, and a set of security roles. Job title is never a role. Client `userId`, document metadata, and model text are never authorities. Default decision is deny. `SUSPENDED` and `DEPARTED` accounts cannot use protected operations even if their session still carries roles; production authentication must refresh account status and revoke sessions after a status change.
 
@@ -35,3 +49,12 @@ Question POST and examples/UI require current authenticated sessions; POST also 
 Structured facts come from the six-field canonical public service projection with a final read. Document processing separates internal search from externalSource: current approved/PUBLISHED version, ACL/grants and all external/synthetic/non-sensitive flags are mandatory. At most one short excerpt and reviewed question may reach the separate grounded Provider contract, still behind explicit live activation. No tool payload is enabled for real Gemini. Strict exact S1/quote checking rejects invented facts, model URLs and policy instructions; final source/identity revalidation precedes the server answer. Missing/ambiguous/stale evidence yields a fixed non-disclosing UNANSWERABLE result.
 
 The required approved answer DTO is transient, no-store, and rendered as text. It does not reflect the submitted question or raw model draft; no history/log/DB/browser-storage transcript is added. Audit includes only actor/model/type/outcome/count/latency. Safe AI errors and counters do not change chat authorization or REST/STOMP handlers. Existing final-check races, session/process limiter limits, blocking DB/audit I/O and Oracle audit durability remain unverified. See ai-question-orchestration.md and oracle-validation-backlog.md; no final security/operational certification is claimed.
+
+## 2026-11-10 local demo administrator exception
+
+The first administrator's four-character password is a user-selected exception for the isolated synthetic Oracle demo, enabled only by a Git-ignored local property plus loopback HTTPS, Mock AI, and the `BANS_CHAT` schema. The bootstrap still requires the fresh seeded PENDING account, dedicated PDB/schema, expected table/role counts, no prior activation, and an ACCOUNT_ADMIN role; it commits a hash and metadata audit together. The exception does not change ordinary account activation's 12-character minimum. Remove the short-password opt-in and replace the demo password with a stronger one before any shared deployment; no deployment readiness is claimed here.
+
+
+## Oracle-only 8080 demo (2026-11-10)
+
+2026-11-10 local demonstration runs over loopback HTTP port 8080 as requested. Secure cookie is disabled for this mode; keep the binding on 127.0.0.1 and do not expose it on a network interface.

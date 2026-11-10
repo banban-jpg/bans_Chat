@@ -45,7 +45,7 @@ public class QuestionTestSupport {
     final MutableClock clock = new MutableClock();
     QuestionTestSupport() {
         accounts.provisionForTest("EMP-002", new BCryptPasswordEncoder(4).encode(UUID.randomUUID().toString()));
-        var env = new MockEnvironment(); env.setActiveProfiles("local-mock"); store = new InMemoryDocumentWorkspace(env);
+        var env = new MockEnvironment(); env.setActiveProfiles("fixture-test"); store = new InMemoryDocumentWorkspace(env);
         workflow = new ManagedDocumentService(store, accounts); organization = spy(new OrganizationService(directory));
         documents = spy(new DocumentSearchService(new InMemoryDocumentSearchRepository(store), store, workflow));
     }

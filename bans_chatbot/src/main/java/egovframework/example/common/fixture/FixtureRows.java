@@ -5,7 +5,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-/** Reads checked-in synthetic PSV resources shared by local-mock and offline tests. */
+/** Reads checked-in synthetic PSV resources for offline tests and the Oracle seed source. */
 public final class FixtureRows {
     private FixtureRows() { }
 

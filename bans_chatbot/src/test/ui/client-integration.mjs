@@ -49,6 +49,7 @@ try{
   renderPublished(parent,'<h1>가상</h1><p>&lt;img src=x onerror=alert(1)&gt;</p>');assert.equal(parent.children[1].tag,'p');assert.equal(parent.children[1].textContent,'<img src=x onerror=alert(1)>');
   stage='API client errors';const nativeFetch=globalThis.fetch;let expire=0;const api=createApi(()=>expire++);
   globalThis.fetch=async()=>new Response('{"code":"SAFE"}',{status:503});await assert.rejects(()=>api.request('/api/ai/questions'),e=>e.status===503);assert.equal(expire,0);
+  globalThis.fetch=async(path)=>path==='/api/auth/csrf'?new Response('{"data":{"headerName":"X-CSRF-TOKEN","token":"demo"}}'):new Response('{"code":"AUTH_REQUIRED"}',{status:401});await assert.rejects(()=>api.request('/api/auth/login',{method:'POST',body:{employeeCode:'EMP-001',password:'wrong'}}),e=>e.status===401);assert.equal(expire,0);
   globalThis.fetch=async()=>new Response('{"code":"SAFE"}',{status:401});await assert.rejects(()=>api.request('/api/auth/me'),e=>e.status===401);assert.equal(expire,1);
   globalThis.fetch=async()=>new Response('{"data":{"ok":true}}');let resolveOld;globalThis.fetch=()=>new Promise(resolve=>{resolveOld=resolve;});const old=api.request('/api/employees');api.reset();resolveOld(new Response('{"data":{"private":"stale"}}'));await assert.rejects(()=>old,e=>e.status===0);globalThis.fetch=nativeFetch;
   console.log('CLIENT_PASS real HTTP + production JS STOMP connect/send/read/reconnect/REST recovery; document/AI sources; 401/403/429/503/XSS/stale-response; Oracle/Gemini=0');

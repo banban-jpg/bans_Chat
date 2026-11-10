@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
-@Repository @Profile({"test", "local-mock"})
+@Repository @Profile({"test"})
 public class InMemoryOrganizationRepository implements OrganizationRepository {
  private record Row(EmployeeView view, String task, String status) {}
  private final Map<String,Row> rows = new TreeMap<>();

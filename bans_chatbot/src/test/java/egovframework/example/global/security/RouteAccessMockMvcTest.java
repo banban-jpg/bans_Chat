@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /** Every production MVC mapping must have an explicit authentication probe, including local-only routes. */
-@SpringBootTest @AutoConfigureMockMvc @ActiveProfiles("local-mock")
+@SpringBootTest @AutoConfigureMockMvc @ActiveProfiles({"test", "fixture-test"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class RouteAccessMockMvcTest {
     @Autowired MockMvc mvc;

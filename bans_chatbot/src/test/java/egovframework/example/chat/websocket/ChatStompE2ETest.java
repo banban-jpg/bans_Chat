@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@org.junit.jupiter.api.extension.ExtendWith(org.springframework.boot.test.system.OutputCaptureExtension.class)
 class ChatStompE2ETest {
     @LocalServerPort int port;
     @Autowired ObjectMapper json;
@@ -108,6 +109,18 @@ class ChatStompE2ETest {
         try {sb2.disconnect();} catch (IllegalStateException alreadyClosed) { }
         sa.disconnect();sc.disconnect();
     }
+    @Test void malformedJsonCannotLeakPayloadInFrameworkErrorLogs(org.springframework.boot.test.system.CapturedOutput logs) throws Exception {
+        var browser=login("EMP-001");var session=connect(browser,browser.csrf,"http://127.0.0.1:"+port);
+        var errors=new LinkedBlockingQueue<String>();session.subscribe("/user/queue/chat.errors",capture(errors));
+        Thread.sleep(150); // SimpleBroker has no receipts; allow the subscription to be installed.
+        String sentinel="SYNTHETIC_STEP16_MALFORMED_PRIVATE";
+        var headers=new StompHeaders();headers.setDestination("/app/chat.send");headers.setContentType(MediaType.APPLICATION_JSON);
+        session.send(headers,("{\"content\":\""+sentinel+"\",invalid-json}").getBytes(StandardCharsets.UTF_8));
+        String response=errors.poll(5,TimeUnit.SECONDS);
+        assertThat(response).isEqualTo("{\"code\":\"CHAT_REQUEST_INVALID\"}");
+        assertThat(logs.getAll().contains(sentinel)).as("conversion exceptions must not log payload snippets").isFalse();
+        session.disconnect();
+    }
     private void sendPayload(StompSession session,StompHeaders headers,Object payload) throws Exception {
         session.send(headers,json.writeValueAsBytes(payload));
     }
@@ -115,6 +128,28 @@ class ChatStompE2ETest {
         var a=login("EMP-001");String origin="http://127.0.0.1:"+port;
         assertThatThrownBy(()->connect(a,"wrong",origin)).isInstanceOf(Exception.class);
         assertThatThrownBy(()->connect(a,a.csrf,"https://elsewhere.example")).isInstanceOf(Exception.class);
+    }
+    @Test void hostileSubscriptionAndSendErrorsNeverExposePayloadOrSession(org.springframework.boot.test.system.CapturedOutput logs) throws Exception {
+        var browser=login("EMP-001");String secret="SYNTHETIC_STEP16_PRIVATE_BODY";
+        String cookie=String.join("; ",browser.cookies.getCookieStore().getCookies().stream().map(HttpCookie::toString).toList());
+        String session=browser.cookies.getCookieStore().getCookies().stream().filter(c->c.getName().equals("JSESSIONID")).findFirst().orElseThrow().getValue();
+        for(String command:List.of("SUBSCRIBE","SEND"))
+        for(String destination:List.of("/topic/private","/queue/chat.messages","/user/EMP-002/queue/chat.messages","/app/not-allowed")){
+            var frames=new LinkedBlockingQueue<String>();var pending=new StringBuilder();
+            var socket=browser.http.newWebSocketBuilder().header("Origin","http://127.0.0.1:"+port)
+                    .buildAsync(URI.create("ws://127.0.0.1:"+port+"/ws/chat"),new WebSocket.Listener(){
+                        public CompletionStage<?> onText(WebSocket ws,CharSequence data,boolean last){pending.append(data);if(last){frames.add(pending.toString());pending.setLength(0);}ws.request(1);return CompletableFuture.completedFuture(null);}
+                    }).get(5,TimeUnit.SECONDS);
+            try{
+                socket.sendText("CONNECT\naccept-version:1.2\nhost:localhost\nX-CSRF-TOKEN:"+browser.csrf+"\n\n\0",true).join();
+                assertThat(frames.poll(5,TimeUnit.SECONDS)).startsWith("CONNECTED");
+                socket.sendText(command+"\nid:attack\ndestination:"+destination+"\nx-private:"+secret+"\n\n"+(command.equals("SEND")?secret:"")+"\0",true).join();
+                String error=frames.poll(5,TimeUnit.SECONDS);assertThat(error).isNotNull();
+                assertThat(error.startsWith("ERROR")).isTrue();
+                assertThat(error.contains(secret)||error.contains(session)||error.contains("MessageDeliveryException")).as("sanitized STOMP ERROR").isFalse();
+            }finally{socket.abort();}
+        }
+        assertThat(logs.getAll().contains(secret)||logs.getAll().contains(session)).as("no raw STOMP body or HTTP session in logs").isFalse();
     }
     @Test void suspendedAccountCannotReceiveQueuedMessage() throws Exception {
         var a=login("EMP-001");var b=login("EMP-002");

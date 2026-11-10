@@ -32,6 +32,7 @@ public class AiQuestionService {
     private final ChatProvider provider;
     private final AiQuestionAudit audit;
     private final Clock clock;
+    private final OutboundDisclosurePolicy disclosure;
     private final ObjectMapper drafts = new ObjectMapper(JsonFactory.builder()
             .streamReadConstraints(StreamReadConstraints.builder().maxNestingDepth(4).maxStringLength(512).build())
             .enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION).build())
@@ -41,6 +42,7 @@ public class AiQuestionService {
                              DocumentSearchService documents, ChatProvider provider, AiQuestionAudit audit, Clock clock) {
         this.sessions = sessions; this.policy = policy; this.organization = organization; this.documents = documents;
         this.provider = provider; this.audit = audit; this.clock = clock;
+        this.disclosure = new OutboundDisclosurePolicy(documents);
     }
     private static final class Trace {
         String actor;
@@ -134,7 +136,7 @@ public class AiQuestionService {
         // Ambiguous or conflicting candidates are not resolved by a model's guess.
         if (hits.hasMore() || hits.items().size() != 1) return null;
         var hit = hits.items().getFirst(); execution.tool();
-        try { return documents.externalSource(sessions.requireCurrent(request), hit.documentId(), hit.versionId(), hit.fragmentId()); }
+        try { return disclosure.requireAllowed(sessions.requireCurrent(request), intent, hit.documentId(), hit.versionId(), hit.fragmentId()); }
         catch (ApiException denied) { if (denied.status() == HttpStatus.NOT_FOUND) return null; throw denied; }
     }
     private String excerpt(SourceFragment source) {

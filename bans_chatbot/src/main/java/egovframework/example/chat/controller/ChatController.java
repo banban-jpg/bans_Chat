@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 public class ChatController {
  private final ChatService service; private final Environment environment;
  public ChatController(ChatService service,Environment environment) { this.service=service; this.environment=environment; }
- @ModelAttribute void label(HttpServletResponse response) { if(environment.acceptsProfiles(Profiles.of("local-mock"))) response.setHeader("X-Demo-Data","SYNTHETIC_EPHEMERAL"); }
+ @ModelAttribute void label(HttpServletResponse response) { if(environment.acceptsProfiles(Profiles.of("test"))) response.setHeader("X-Demo-Data","SYNTHETIC_EPHEMERAL"); }
  private SessionActor actor(HttpServletRequest request) { return (SessionActor)request.getAttribute(SessionBoundaryInterceptor.SESSION_ACTOR); }
  @PostMapping public ApiResponse<DirectConversation> open(HttpServletRequest request,@Valid @RequestBody Open body) { return ApiResponse.of(service.open(actor(request),body.recipientEmployeeId())); }
  @GetMapping public ApiResponse<List<Room>> rooms(HttpServletRequest request) { return ApiResponse.of(service.rooms(actor(request))); }

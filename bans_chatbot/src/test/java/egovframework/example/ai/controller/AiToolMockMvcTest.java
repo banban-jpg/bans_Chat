@@ -19,7 +19,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest @AutoConfigureMockMvc @ActiveProfiles("local-mock")
+@SpringBootTest @AutoConfigureMockMvc @ActiveProfiles({"test", "fixture-test"})
 class AiToolMockMvcTest {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;

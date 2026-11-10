@@ -9,11 +9,18 @@ import org.apache.commons.dbcp2.BasicDataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 
 /** Explicit Oracle-only boundary. No mock or embedded database fallback. */
 @Configuration(proxyBeanMethods = false)
 @Profile("oracle")
 public class OracleDataSourceConfiguration {
+    private final Environment environment;
+
+    public OracleDataSourceConfiguration(Environment environment) {
+        this.environment = environment;
+    }
+
     @Bean(destroyMethod = "close")
     public DataSource oracleDataSource() {
         String url = required("ORACLE_JDBC_URL");
@@ -53,8 +60,8 @@ public class OracleDataSourceConfiguration {
         return dataSource;
     }
 
-    private static String required(String name) {
-        String value = System.getenv(name);
+    private String required(String name) {
+        String value = environment.getProperty(name);
         if (value == null || value.isBlank()) {
             throw new IllegalStateException("ORACLE_CONFIG_MISSING: " + name);
         }

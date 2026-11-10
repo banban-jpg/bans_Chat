@@ -21,13 +21,16 @@ public class ProfileBoundaryGuard implements BeanFactoryPostProcessor, Environme
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
         boolean oracle = active("oracle");
         boolean oracleIt = active("oracle-it");
+        boolean oracleBootstrap = active("oracle-bootstrap");
         boolean test = active("test");
-        boolean localMock = active("local-mock");
-        if ((oracle && (test || localMock)) || (test && localMock)) {
-            throw new IllegalStateException("PROFILE_CONFLICT: database and mock/test profiles must be separate");
+        if (oracle && test) {
+            throw new IllegalStateException("PROFILE_CONFLICT: database and test profiles must be separate");
         }
         if (oracleIt && !oracle) {
             throw new IllegalStateException("PROFILE_CONFLICT: oracle-it requires oracle");
+        }
+        if (oracleBootstrap && (!oracle || oracleIt)) {
+            throw new IllegalStateException("PROFILE_CONFLICT: oracle-bootstrap requires oracle without oracle-it");
         }
     }
 

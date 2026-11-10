@@ -9,7 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 
-/** Deterministic Oracle-only seed renderer from the same PSV files used by local-mock. */
+/** Deterministic Oracle-only seed renderer from the same PSV files used by test. */
 public final class SyntheticOracleSeedRenderer {
     private SyntheticOracleSeedRenderer() { }
 

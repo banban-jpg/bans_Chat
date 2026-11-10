@@ -1,4 +1,4 @@
-# STEP 15 — 최소 웹 UI와 로컬 Mock 시연
+# STEP 15 — 최소 웹 UI와 Oracle DB 시연
 
 2026-11-04 KST. 통합 화면은 `GET /`이다. 기존 Thymeleaf와 네 개의 로컬 CSS/JavaScript 파일만 사용한다. 프론트 패키지 설치·번들러·CDN·무거운 UI 라이브러리·버전 변경은 없다. 기존 Java 21 / eGovFrame 5.0.0 / Boot 3.5.6, Oracle 26ai Free, 서버 세션, MyBatis, Mock 기본 Provider를 유지한다.
 
@@ -13,7 +13,7 @@ New-Item -ItemType Directory -Path local-notes -Force | Out-Null
 $securePassword = Read-Host '가상 최초 관리자 비밀번호 (12~128자)' -AsSecureString
 $env:BANS_LOCAL_ADMIN_PASSWORD = [Net.NetworkCredential]::new('', $securePassword).Password
 try {
-    java -jar target/bans_chatbot-1.0.0.jar --spring.profiles.active=local-mock --server.address=127.0.0.1
+    java -jar target/bans_chatbot-1.0.0.jar --spring.profiles.active=oracle --server.address=127.0.0.1
 } finally {
     Remove-Item Env:BANS_LOCAL_ADMIN_PASSWORD -ErrorAction SilentlyContinue
 }
@@ -67,3 +67,16 @@ Remove-Item Env:BANS_UI_BROWSER_TEST
 이 명령의 성공은 아직 확인하지 않았다. 정상 테스트는 실제 Oracle/Gemini 호출 0회다. Oracle 검증은 **BLOCKED: ORACLE_26AI_NOT_INSTALLED**, 실제 Gemini/Oracle E2E는 NOT_RUN이다. 정적 자산 4개는 약 25KB이고 shell까지 합쳐 64KiB 미만을 검사했다. 이는 실 DB/다중 사용자 응답 시간 또는 성능 벤치마크가 아니다.
 
 공식 근거: [eGovFrame Boot 예제](https://www.egovframe.go.kr/docs/5.0/egovframe-development/deployment-tool/build-tool/gradle/boot-to-gradle/), [Spring STOMP SimpleBroker](https://docs.spring.io/spring-framework/reference/6.2/web/websocket/stomp/handle-simple-broker.html), [Spring broker 한계](https://docs.spring.io/spring-framework/reference/6.2/web/websocket/stomp/handle-broker-relay.html). Google 가격·지역·모델 폐기·프로젝트 한도도 gemini-free-tier.md의 공식 문서로 재확인했다. 모델 allowlist/SDK/무료 티어 정책은 바꾸지 않았으며 실제 프로젝트의 무료 접근 성공을 확인한 것은 아니다.
+
+2026-11-09 현재 Oracle 프로필에서 HTTPS 로그인 화면과 CSRF 응답은 실제 서버로 확인했다. 기존 local-mock 시연 절차와 구별되는 Oracle 최초 관리자 활성화, 실행 명령, 남은 UI 검증은 [Oracle UI 시연 안내](oracle-ui-demo.md)를 따른다. 위의 `ORACLE_26AI_NOT_INSTALLED` 표기는 과거 STEP 15 당시의 결과다.
+
+이후 최초 관리자 대기 상태의 혼란을 줄이기 위해 Oracle 첫 화면은 초기 설정 안내를 보여주고 로그인 폼을 숨기도록 수정했다. 실제 Oracle HTTPS 응답에서 안내와 숨김 상태를 확인했다. 활성화가 끝난 뒤 새로고침하면 정상 로그인 화면으로 전환된다. 활성화와 로그인 자체는 아직 실행하지 않았다.
+
+최초 관리자 비밀번호 입력 방법은 로컬 프로퍼티로 변경했다. `bans_chatbot/oracle-local.properties`의 `BANS_ORACLE_FIRST_ADMIN_PASSWORD`에 설정하면 첫 Oracle 기동에서만 활성화하고, 이후 기동은 기존 계정을 유지한다. 대기 상태 화면도 PowerShell 명령 대신 이 파일과 재시작 절차를 안내한다.
+
+2026-11-10: 로컬 설정값의 길이 때문에 Oracle 기동이 중단되던 문제를 수정했다. 합성 시연 전용 명시적 허용값과 로컬 HTTPS/Mock AI/전용 스키마 조건에서만 4자 이상의 최초 비밀번호를 허용한다. 실제 Oracle HTTPS에서 EMP-001 로그인과 관리자 세션을 확인했고 재시작 후 재로그인도 성공했다. 로그인 401은 화면에서 자격정보 오류로 표시하며 보호 API의 401만 세션 만료로 처리한다. 전체 브라우저 클릭 검증은 별도다.
+
+
+## Chat UI redesign (2026-11-10)
+
+2026-11-10 채팅 화면: 대화 목록 검색, 미읽음 배지, 선택 대화 강조, 새 대화 시작, 좌우 말풍선, Enter 전송/Shift+Enter 줄바꿈, 이전 기록을 불러올 때 스크롤 위치 유지 기능을 제공한다. 직원 검색에서 대화하기를 누르거나 채팅 화면의 새 대화 시작을 사용한다. API와 STOMP 목적지는 기존 계약을 사용한다.

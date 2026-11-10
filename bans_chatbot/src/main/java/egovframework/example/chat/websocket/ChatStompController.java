@@ -59,4 +59,10 @@ public class ChatStompController {
                     new ErrorEvent(exception.code()));
         }
     }
+    /** Jackson/conversion exceptions may retain raw payload snippets; never log or reflect them. */
+    @MessageExceptionHandler(Exception.class)
+    public void invalidFrame(Exception discarded, Principal principal) {
+        if (principal != null) messaging.convertAndSendToUser(principal.getName(), "/queue/chat.errors",
+                new ErrorEvent("CHAT_REQUEST_INVALID"));
+    }
 }

@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 public class ManagedDocumentController {
  private final ManagedDocumentService service;private final DocumentSearchService search;private final Environment environment;
  public ManagedDocumentController(ManagedDocumentService service,DocumentSearchService search,Environment environment){this.service=service;this.search=search;this.environment=environment;}
- @ModelAttribute void label(HttpServletResponse response){if(environment.acceptsProfiles(Profiles.of("local-mock")))response.setHeader("X-Demo-Data","SYNTHETIC_EPHEMERAL");}
+ @ModelAttribute void label(HttpServletResponse response){if(environment.acceptsProfiles(Profiles.of("test")))response.setHeader("X-Demo-Data","SYNTHETIC_EPHEMERAL");}
  private SessionActor actor(HttpServletRequest r){return (SessionActor)r.getAttribute(SessionBoundaryInterceptor.SESSION_ACTOR);}
  @PostMapping public ApiResponse<String> create(HttpServletRequest r,@Valid @RequestBody Create input){return ApiResponse.of(service.create(actor(r),input));}
  @PostMapping("/{code}/versions") public ApiResponse<Integer> version(HttpServletRequest r,@PathVariable String code,@Valid @RequestBody Version input){return ApiResponse.of(service.addVersion(actor(r),code,input));}

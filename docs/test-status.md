@@ -1,5 +1,80 @@
 # Test status
 
+## STEP 19 현재 실행 결과 (2026-11-04 KST)
+
+최종 `scripts/local.ps1 -Action build -Offline -MavenRepository $cache` 내부 wrapper clean test package **PASS19:17:23**, Java21.0.3/Maven3.9.6/124main·73test source. **288testcase=285PASS/3SKIPPED/FAIL·ERROR0**,56개 baseline XML. 별도 track-a runner는 **2PASS19:19:25**이며 기본 skip2와 같은 testcase의 별도 실행이다. Chrome1은 이번 opt-in 미실행 SKIPPED. Oracle13class는 **BLOCKED: ORACLE_26AI_NOT_INSTALLED**, 실Gemini는 SKIPPED(실행시도없음/NOT_RUN).
+
+신규 FinalApiHttpVerificationTest(기본 suite 포함): 실제 local-mock 서버65HTTP요청,39개 Controller mapping 각각 정상응답 + static4 + 비인증/CSRF/IDOR/revoke/logout negative. JAR smoke도 별도기동/6route/Mock라벨 PASS 후 종료했다. 현재 source/runtime API 추출과 실제 XML 결과 생성·시크릿/링크/구문 검사 결과는 [개별 결과](TEST_RESULTS.md)와 [최종 보고서](FINAL_VERIFICATION_REPORT.md)를 따른다. 실제 DB/외부AI 호출각0이며 과거 단계 결과는 아래 이력이다.
+
+## STEP 18 최종 재현·인수인계 (2026-11-04 KST)
+
+환경: Windows PowerShell 5 / Java21.0.3 / wrapper Maven3.9.6 / eGovFrame5.0.0 / Boot3.5.6 / Node22.17.0. 진입은 dev/88836b4와 기존 미커밋 STEP16/17이며 보존했다. .env.example 값을 비웠고 운영 API/DDL/seed/POM/모델을 바꾸지 않았다. Oracle 제품명26ai와 내부23.26 릴리스 근거를 구분하도록 예비 IT만 수정했다. 실 Oracle/Gemini 호출 각각0회.
+
+기존 MAVEN_HOME과 이 PC의 `.maven-repo` 절대 경로를 사용했다. exact 환경과 명령은 setup.md/README에 있다.
+
+| 실제 실행 | 결과/증거 |
+|---|---|
+| `scripts/local.ps1 -Action build -Offline -MavenRepository <기존 캐시>` | **PASS 18:46:50**, 내부 wrapper **clean test package**, 124 main/72 test source, selected287 = **284 PASS + 3 SKIPPED**, 실패·오류0. local-notes/step18-build.log. 실행 JAR 생성, package의 중복 Surefire 실행 없음. |
+| OracleReleaseEvidenceTest | **PASS 4건**, 공식 제품 banner26ai Free/23.26 예시 허용, 다른 제품/edition 거부. 실제 DB 연결/SELECT 실행은 아님. |
+| `mvnw.cmd -o <cacheArg> '-Dtest=WorkbenchClientIntegrationTest,WorkbenchMockMvcTest' test` | **PASS 18:51:10**, 핵심 시나리오 5건. MVC 활성화/검색/채팅·문서/AI/관리자 및 실제 JS+localhost HTTP/STOMP/출처/재접속. step18-scenarios.log와 CLIENT_PASS. |
+| `scripts/verify-source.ps1` | **PASS**, 최초 및 최종 문서 재검사(19:00 KST). HEAD/index/worktree 후보 287파일/텍스트273개, 제한 키·private-key 패턴/.env.example 빈 값/로컬 문서 링크 위반0. 원문 매치/비밀값 출력 없음. step18-source-check.log 및 step18-source-inventory.json. |
+| `scripts/smoke-local.ps1` 최초 | **FAIL**, 도구 출력 MOCK_BANNER_MISSING. Windows PowerShell5가 BOM 없는 UTF-8 한글 literal을 오독. 서버 자체는 정상 부팅. scripts와 performance PS1을 UTF-8 BOM으로 보정. |
+| 같은 smoke 재실행 | **PASS**, /·health2개·csrf·app.js 200, 보호 chat API401, Mock banner. step18-smoke-final.log. 임시포트 localhost/Mock만 실행, finally에서 자기 프로세스 종료. |
+| 기본 suite 선택적 테스트 | **SKIPPED 3**: Chrome1(기존 renderer/CDP BLOCKED), 부하실험2(별도 STEP17 PASS). full55개 Surefire report 287/0/0/3과 일치. |
+| Oracle-only 13개 class / live greeting smoke | 일반 test에서 이름/tag로 **SKIPPED by selection**. 실제 Oracle 검증 모두 **BLOCKED: ORACLE_26AI_NOT_INSTALLED**. live Gemini **NOT_RUN**. |
+| Oracle 설치·변경·seed·TLS·backup/restore·실 DB E2E | **NOT_RUN / BLOCKED**, 수행하지 않음. Oracle 최초 관리자 bootstrap **미구현/수락 차단**. |
+| 실제 Chrome 클릭·raw run 사용자 입력/실 greeting | **NOT_RUN**, 기존 브라우저 환경 BLOCKED 유지. 안내한 수동 명령을 실행 결과로 표시하지 않음. |
+
+예비 IT는 JDBC major=26만 요구하던 오류를 v$version banner/Free 확인으로 바꿨다. 이 Oracle SELECT는 아직 실행하지 않았다. .env.example에는 값 없는 이름만 있고 자동 로드하지 않는다. 현재 source 검사 범위는 제한 패턴 및 링크/manifest 성격이며 전체 Git 과거 이력·모든 비밀·CVE/DAST 인증이 아니다. 소스/명령/로그/제약/미구현 항목을 README/setup/known-limitations/Oracle checklist로 동기화했다.
+
+## STEP 17 실험/전체 테스트 (2026-11-04 KST)
+
+Windows 11 / Java 21.0.3 / Maven Wrapper 3.9.6 / eGovFrame 5.0.0 / Boot 3.5.6 / Node 22.17.0. 시작은 dev / 88836b4와 미커밋 STEP 16 변경이며 보존했다. 환경/하드웨어·실험 표본·p50/p95·오류율의 정의는 performance-and-failure.md를 따른다. 실제 Oracle/Gemini 호출 0회.
+
+모듈에서 기존 MAVEN_HOME과 `$cacheArg = '-Dmaven.repo.local=C:\eGovFrameDev-5.0.2-Windows-64bit\workspace-egov\bans_Chat\.maven-repo'`를 사용했다.
+
+| 실제 실행 | 상태/근거 |
+|---|---|
+| CIM CPU/메모리 조회 | **FAIL**, 권한 거부. Node os API 수집은 PASS. 개인정보/비밀값을 조사하거나 권한을 올리지 않음. |
+| BANS_MOCK_LOAD_TEST=YES, `.\mvnw.cmd -o $cacheArg '-Dtest=MockLoadExperimentTest,ProviderFailureExperimentTest' test` | **PASS 18:21:02**, 2건, 실패·오류·skip 0, 초기 9 burst와 장애 실험. step17-track-a-build.log. |
+| 같은 명령, HTTP 오류 분리/Mock 문서 AI·429·JS 제어 추가 후 | **PASS 18:23:26**, 2건. step17-track-a-final.log. |
+| BANS_MOCK_LOAD_TEST=NO, `.\mvnw.cmd -o $cacheArg clean test package` | **PASS 18:25:35**, 당시 selected 281/실패0/오류0/skip3. step17-full.log. |
+| `& ..\performance\scripts\track-a.ps1 -o $cacheArg` 최초 | **FAIL**, Windows PowerShell ErrorActionPreference=Stop이 Mockito native stderr 경고를 종료 오류로 처리. underlying JSON은 생성됐으나 runner 성공으로 기록하지 않음. step17-script-run.log. |
+| 같은 실제 runner 명령, native stderr/종료 코드 처리 수정 후 | **PASS 18:28:25**, 두 실험 PASS. 최종 수신 assertion/9 burst/장애/UI fake timer 포함. step17-script-final.log와 TRACK_A_PASS. |
+| 최종 BANS_MOCK_LOAD_TEST=NO, `.\mvnw.cmd -o $cacheArg clean test package` | **PASS 18:30:41**, **124 main/71 test source, selected 283 = 280 PASS + 3 SKIPPED**, 실패·오류 0, 실행 JAR 생성. step17-final.log. |
+| 최종 Surefire XML 집계 | **PASS**, 54개 report의 283/0/0/3. skipped 3은 Chrome 선택적 테스트 1 + 별도 실행한 Mock 부하/장애 실험 2. |
+| 10/20/30 실제 localhost 연결, 각 3회 | **PASS**, 최대 12개 고유 합성 계정, 연결 30개, HTTP 2763회/기대 거부45/예상 밖 오류0. 혼합 표본3312는 HTTP 개수와 다름. 상대 JS 수신180/중복송신/읽음/승인경쟁/권한변경/재연결 확인. |
+| 429/503/JSON/timeout·busy burst | **PASS**, 각각 3회+20 동시 시도, 외부 호출0. 인위적 실패율100%는 정상 성공률 저하와 구분. 원격 API가 아닌 localhost mock. |
+| UI 동작 제어/재시도 상한 | **PASS**, production API JS/fake fetch의 오류 전파, STOMP fake timer 1/2/4/8/15초 5회 상한. 실제 브라우저 paint/클릭은 **BLOCKED: CHROME_RENDERER_CDP_UNAVAILABLE**, STEP 17 재시도 NOT_RUN. |
+| 새 Mock 저장소 객체 | **PASS**, 데이터가 사라짐을 확인. OS/process kill·restart 복구는 **NOT_RUN**이며 객체 교체와 동치 취급 안 함. |
+| Oracle-only 13개 클래스/live smoke | 일반 suite에서 **SKIPPED by selection**. Oracle 실제 실행 전체 **BLOCKED: ORACLE_26AI_NOT_INSTALLED**. |
+| Oracle 트랙 B·실 Gemini·실 DB E2E/성능/중단·복구 | **NOT_RUN / BLOCKED**, 설치·중단·유료 전환·DB SQL 실행 없음. |
+
+스크립트 PS AST와 JS 구문 검사 PASS, git diff --check PASS, 운영 POM/db/oracle diff 없음. 새 read-only Oracle 관측 SQL은 performance/scripts의 미실행 계획이다. 로그/JSON은 ignored local-notes, 공용 재현 코드·집계 문서는 Git 대상이다. Mock 숫자로 DB 성능/SLA를 약속하지 않는다. 당시 STEP 18은 미수행이었으며 최신 결과는 이 문서 맨 위 STEP 18 절을 따른다.
+
+최종 확인 **18:35:10 KST PASS**: raw JSON/log Git 제외, 재현 script/공용 문서 Git 대상, 9회 최종 metric/예상 밖 HTTP 오류0, git diff --check exit0, 두 실행 프로세스 종료코드0. 이후 운영 코드/테스트 변경 없음. STEP 16 미커밋 변경과 STEP 17 변경 모두 미커밋 상태로 남겼다.
+
+## STEP 16 최종 보안 회귀 (2026-11-04 KST)
+
+깨끗한 dev / 88836b4에서 시작. Windows 11, Java 21.0.3, Maven Wrapper 3.9.6, eGovFrame 5.0.0/Boot 3.5.6 유지. 상세 case/심각도/한계는 security-test-results.md를 따른다. 실제 Oracle 연결/실 Gemini 호출은 각각 0회다. 로그는 ignored bans_chatbot/local-notes에 있다.
+
+모듈에서 기존 MAVEN_HOME을 지정하고 `$cacheArg = '-Dmaven.repo.local=C:\eGovFrameDev-5.0.2-Windows-64bit\workspace-egov\bans_Chat\.maven-repo'`로 실행했다.
+
+| 실행 명령 | 결과 |
+|---|---|
+| `.\mvnw.cmd -o $cacheArg '-Dtest=ChatStompE2ETest,OutboundSecurityRegressionTest' test` | **FAIL 17:58:59**, 13건 중 9 setup ERROR. 새 테스트의 RPM 20이 제품 상한 10을 초과. 테스트 설정만 수정하고 null-safe cleanup 보강. 제품 한도 변경 없음. step16-targeted.log. |
+| `.\mvnw.cmd -o $cacheArg '-Dtest=ChatStompE2ETest,OutboundSecurityRegressionTest,AttackRegressionMockMvcTest' test` | **PASS 18:01:42**, 16건, 실패·오류·skip 0. step16-targeted2.log. |
+| `.\mvnw.cmd -o $cacheArg clean test package` | **PASS 18:03:41**, STOMP 8개 공격 조합 확장 후. step16-final.log. |
+| 같은 전체 명령, malformed JSON 오류/원문 로그 방어 추가 후 | **PASS 18:05:32**, **279 selected = 278 PASS + 1 SKIPPED**, 실패·오류 0. 124 main/67 test source, 실행 JAR 생성. step16-release.log. Surefire 중복 실행 없음. |
+| Fresh Surefire XML | **PASS**, 51개 report의 279/0/0/1과 일치. 기존 265 selected 대비 14개 case 추가. |
+| 신규 보안 case | **PASS**, outbound wire 9 + 공격 MVC 3 + 기존 WS E2E에 추가한 2 = 14. 실제 raw WS 8개 SEND/SUBSCRIBE 공격은 한 case 안에서 모두 실행. |
+| 정책과 HTTP bytes/전송 0회 | **PASS**, localhost 모의 서버가 승인된 합성 구간만 수신. 4개 fragment 부정 조건·4개 미검토 공격 질문은 HTTP 호출 0. 로그/감사 sentinel 부재. |
+| Chrome 전체 클릭 | 정상 suite에서 **SKIPPED 1**, STEP 15의 CHROME_RENDERER_CDP_UNAVAILABLE 환경 BLOCKED 유지. STEP 16에서 브라우저 클릭 재시도 NOT_RUN. |
+| Oracle IT 12개 클래스·실 Gemini smoke | 정상 test에서 이름/tag로 **SKIPPED by suite selection**. Oracle 실제 검증 **BLOCKED: ORACLE_26AI_NOT_INSTALLED**, 호출 0. |
+| 실 모델·DB E2E·외부 DAST/의존성 CVE 스캔 | **NOT_RUN**. 기존 scanner 설정 없음, 새 도구 설치 안 함. |
+
+18:06 KST git diff --check PASS(exit 0), POM/db/oracle diff 없음. 정상 소스·테스트·공용 보안 보고서는 Git 대상, 임시 로그는 local-notes 제외를 유지한다. 관찰된 오프라인 미해결 P0는 0이나 Oracle 의존 P0가 BLOCKED이므로 최종 보안 검증 완료가 아니다. STEP 17/18은 수행하지 않았다.
+
 ## STEP 01 baseline
 
 Environment: Windows 11, Asia/Seoul, 2026-11-02; Temurin Java 21.0.3; Maven 3.9.6 via `bans_chatbot/mvnw.cmd` with `MAVEN_HOME` set to the locally installed distribution and `-Dmaven.repo.local=C:\Users\user\.m2\repository`. All Maven invocations below used `-o` (offline). No Oracle connection, SQL execution, or Gemini request occurred.
@@ -470,3 +545,108 @@ $cacheArg = '-Dmaven.repo.local=C:\eGovFrameDev-5.0.2-Windows-64bit\workspace-eg
 실행 기록/Chrome 진단은 모두 ignored local-notes에 있다. 기존 Mockito agent/AssertJ deprecated/optional persistence provider 경고는 빌드 실패 원인이 아니며 DataSource를 만들지 않았다. 새 Thymeleaf template이 있으므로 이전 template-location 경고는 제거된다. Oracle/프로필/스키마/모델/권한 계약의 기존 제한은 유지하고, 시연 절차·500건 한도·heartbeat 미설정·수동 문서 코드 workflow 등 기능 한계는 web-ui.md에 정리했다.
 
 최종 JAR HTTP 재확인 **PASS 17:40:51 KST**, step15-release-http.log에 routes=39. **17:42:39 KST** git diff --check exit 0, POM/db/oracle diff 없음, 해당 smoke PID 종료, JS 자산 25,335바이트 및 JS 구문 검사를 확인했다. 이후 문서/로컬 메모만 갱신했으며 코드는 변경하지 않았다. 변경은 미커밋 상태다.
+# 2026-11-09 demo data bundle review
+
+- **PASS (source only):** `OracleSeedSourceTest,OracleSchemaSourceTest` targeted offline Maven run: 8 tests, 0 failures/errors/skips. Canonical PSV and SQL source checks passed.
+- **PASS (local files):** SHA-256 comparison confirmed all four local PSV copies and `S001__synthetic_company.sql` match their tracked canonical sources; `git check-ignore` confirmed the local bundle path is excluded.
+- **NOT_RUN (Oracle):** No database connection, seed DML, or `verify_demo_data.sql` execution was performed in this review. The user reported 18 created tables, but their names, seed counts, constraints, and runtime behavior were not verified from this workspace.
+- **BLOCKED (full Oracle UI demo):** The initial Oracle administrator account remains PENDING; a secure first-administrator bootstrap is not implemented. No SQL credential shortcut was added.
+
+# 2026-11-09 Oracle properties configuration check
+
+- **PASS:** `ProfileWiringTest,ProfileBoundaryGuardTest` offline Maven run: 3 tests, 0 failures/errors/skips. Normal `test` profile still has no DataSource.
+- **PASS:** `git check-ignore` confirms `bans_chatbot/oracle-local.properties` is ignored. The generated local file has no saved account or password yet.
+- **NOT_RUN:** Oracle JDBC connection and `oracleIntegrationTest.cmd` against a configured DB. No credentials were supplied in this workspace; file import and the changed runner require a configured Oracle connection for end-to-end confirmation.
+
+## 2026-11-09 Oracle connection attempt after local configuration
+
+- **PASS:** Local properties contain the three required keys and are Git-ignored. Oracle driver and Failsafe plugin were resolved for the explicit connection test.
+- **FAIL:** `OracleConnectionOracleIT` reached application startup but the first configured URL (`localhost:1521/FREEPDB1`) failed with Oracle error 12541. The local listener advertises `192.168.1.65:1521` and `freepdb1`; the ignored local URL was corrected to that listener host.
+- **FAIL:** A read-only JDBC connection diagnostic with the corrected host returned Oracle error 1017 (invalid credentials). No seed or other database write was attempted. The user needs to confirm the PDB account and password locally before retrying. The test runner output's full stack trace is confined to ignored build output; credentials were not printed in the response.
+
+## 2026-11-09 Oracle credential retry
+
+- **FAIL:** After the user updated the ignored properties file, the read-only JDBC retry still returned Oracle error 1017. The DBeaver connection settings showed the same host, port, service and `BANS_CHAT` user as the local properties file. Parsing did not alter the password; it was neither quoted, whitespace-padded nor an obvious placeholder. The remaining mismatch is the password accepted by Oracle for that PDB account. No seed or schema write occurred.
+
+## 2026-11-09 Oracle connection verified after password change
+
+- **PASS:** Read-only JDBC connection succeeded with the ignored local properties file and reported Oracle as the database product.
+- **PASS:** Explicit `OracleConnectionOracleIT` ran with `oracle,oracle-it` and verified the Oracle 26ai Free banner: 1 integration test, 0 failures/errors/skips, `BUILD SUCCESS`. The accompanying scoped normal test had 2 passing cases.
+- **PASS (read-only metadata):** Current schema has 18 tables and 5 system-role rows. `department`, `employee`, `employee_account`, and `document` each have 0 rows, consistent with a migrated but unseeded schema.
+- **NOT_RUN:** Synthetic seed DML and full Oracle feature tests. No database write was performed during this connection verification.
+
+## 2026-11-09 Oracle synthetic demo seed application
+
+- **FAIL (no data change):** The first SQL*Plus runner attempt rejected the unquoted Easy Connect syntax with `SP2-0306`; a read-only check still found 0 business rows. A corrected SQL*Plus probe then failed with local client `ORA-12638`; the JDBC connection remained valid. The SQL*Plus wrapper `apply_seed.sql` was not successfully run.
+- **PASS:** The canonical `S001__synthetic_company.sql` was parsed using the same statement boundary rules as `OracleSeedOracleIT` and applied through JDBC as one transaction. Preflight confirmed `FREEPDB1`, the intended schema owner, 18 tables, 5 system roles, and 0 rows in all 17 business tables. Exactly 216 MERGE/UPDATE statements executed and validation passed before commit.
+- **PASS (new connection after commit):** 5 departments, 20 employees, 12 unusable PENDING accounts, 18 employee-role rows, 20 documents/versions/fragments/tags, 18 reviews, 27 grants, 16 approved/2 draft/2 archived documents, 3 external-eligible synthetic fragments, and 0 activation records. Every document's current version resolved to the same document.
+- **NOT_RUN:** Repeated seed application, rollback-on-injected-failure, full constraint/trigger negatives, and end-to-end Oracle UI login. No password or activation code was inserted.
+
+## 2026-11-09 Oracle UI conversion check
+
+- **PASS:** Oracle-profile package build; `ProfileBoundaryGuardTest` (3 tests) and `ProfileWiringTest` (1 test), with zero failures/errors/skips. The Oracle JAR started on localhost HTTPS port 8443 using the Git-ignored local DB and SSL properties.
+- **PASS:** Python TLS validation against the generated localhost certificate fetched `/` (HTTP 200, login form present) and `/api/auth/csrf` (token returned). The bootstrap command reached its interactive hidden-password prompt and was stopped before input; no activation was made.
+- **NOT_RUN:** EMP-001 password entry, committed first-admin activation, Oracle login, and role issuance/second-user activation. These require an operator-selected password. Mock-only UI tests do not certify those Oracle flows.
+- **PASS:** Generated localhost certificate imported into the Windows CurrentUser trusted-root store with thumbprint `4065C16464E89A533A47A816DC60ECBE90A4CA5E` after explicit approval.
+- **BLOCKED:** Visual/browser-click Oracle flow; the browser-access host was unavailable and binding the visible Whale window failed. No browser security interstitial was bypassed.
+- **PASS:** Full ordinary Maven gate after the change, `mvnw.cmd -o -Dmaven.repo.local=C:\Users\user\.m2\repository -Poracle test package`: 289 run, 0 failures, 0 errors, 3 skipped; executable JAR built. The first sandboxed `clean test package` attempt failed at dependency-JAR access before tests; the approved retry completed outside that sandbox restriction.
+
+## 2026-11-09 first-admin landing-page correction
+
+- **PASS:** The Oracle shell now checks only EMP-001's account eligibility/admin role and shows a one-time setup instruction while pending. The login form remains in the DOM but is hidden until setup is complete and the page is refreshed. Local-mock retains its existing login flow.
+- **PASS:** Full ordinary `-Poracle test package`: 290 tests, 0 failures, 0 errors, 3 skipped; packaged JAR. Focused setup-state test covers missing, pending, and active administrator states.
+- **PASS:** Live Oracle HTTP `GET /` returned 200 with the setup section, hidden login section, and bootstrap command. No password was entered or account changed. The server was stopped and port 8443 confirmed closed afterward.
+- **NOT_RUN:** Post-bootstrap Oracle login and complete browser UI scenario; EMP-001 remains pending.
+
+## 2026-11-09 property-driven first-admin setup
+
+- **PASS:** Full ordinary `-Poracle test package` after the property-runner change: 293 tests, 0 failures, 0 errors, 3 skipped; packaged JAR. Unit checks cover no property, active account idempotence, and invalid short property.
+- **PASS:** Actual Oracle-profile startup without an admin property returned HTTP 200 for `/`; the page showed `BANS_ORACLE_FIRST_ADMIN_PASSWORD=` guidance, kept the login section hidden, and did not display the former PowerShell bootstrap command. The server was stopped and port 8443 confirmed closed.
+- **NOT_RUN:** A configured password activating EMP-001 in the live database, then Oracle login and the complete UI flow. The local property key is present but empty; no usable administrator password was committed or logged.
+- **PASS:** A subsequent focused `-Poracle -Dtest=OracleFirstAdminBootstrapTest,FirstAdminSetupAdviceTest package` completed 5 tests with zero failures/errors/skips after adding the pending-account property branch check. The executable JAR was rebuilt.
+
+## 2026-11-10 Oracle administrator login repair
+
+- **FAIL, resolved:** The operator's local property contained a four-character password. The prior 12-character bootstrap check rejected it, causing Oracle startup to stop after Tomcat initialization. The UI also labeled a login 401 as session expiry.
+- **PASS:** A short password is now accepted only with `BANS_ORACLE_ALLOW_SHORT_DEMO_PASSWORD=YES` in the ignored local file, loopback address, HTTPS enabled, Mock AI, and `BANS_CHAT` schema. The transaction still checks the dedicated Oracle PDB/schema, fresh seed, pending account, and role before commit. General activation password rules remain 12–128 characters.
+- **PASS:** Ordinary `-Poracle test package`: 295 tests, 0 failures, 0 errors, 3 skipped. Production JS client integration verifies login 401 does not invoke session-expiry handling; `WorkbenchClientIntegrationTest` passed. The first packaging retry failed because the running Oracle JAR was locked; after stopping that process, focused UI/bootstrap tests and package passed.
+- **PASS, live Oracle:** First configured startup activated EMP-001. HTTPS `/` displayed the login form, and `POST /api/auth/login` followed by `GET /api/auth/me` returned EMP-001 with `ACCOUNT_ADMIN` and a Secure session cookie. A restart with the same property succeeded and the same login still worked. The final JAR served versioned UI JavaScript and repeated the login check successfully.
+- **NOT_RUN:** Visual browser click flow, second-user activation, chat/document/AI UI end-to-end. The browser automation host was previously unavailable; this pass used verified TLS HTTP requests.
+
+## 2026-11-10 local Oracle demo account provisioning
+
+- **PASS, live Oracle JDBC:** Dedicated `BANS_CHAT`/`FREEPDB1` schema, 18 tables, 20 synthetic employees, 20 documents, 5 roles, and 12 existing accounts passed preflight. A single transaction activated all 12 accounts with BCrypt cost 10 hashes. Each account's expected demo password matched its stored hash after the update.
+- **PASS, rerun:** A second application verified the same 12 active accounts and produced zero additional provision audit records, demonstrating idempotence for the generated local SQL/hash set.
+- **PASS:** The generated SQL, verifier, helper, and credential mapping are under the Git-ignored `bans_chatbot/demo-mock-data/` directory.
+- **NOT_RUN:** HTTP login for the newly activated secondary accounts and full UI flows. The operator instructed that the web server remain stopped until they start it.
+- **NOT_RUN:** Ordinary Maven tests for this local-only data change; no tracked application code was changed in this operation.
+- **PASS, corrected mapping:** The initial ordinal-based password assignment was replaced with each account's own employee-code suffix. Direct Oracle JDBC verification checked BCrypt matches for all 12 accounts. Ten affected account hashes and session versions changed; a second run added zero provision audits.
+- **PASS, final mapping:** All 12 local Oracle account passwords were changed again to the three-digit employee-code suffix only. Direct JDBC BCrypt checks matched all 12; prior prefixed passwords were rejected by the stored hashes. No web server was started.
+
+## 2026-11-10 login code format repair
+
+- **PASS:** Focused `AuthFlowMockMvcTest`: 5 run, 0 failures/errors/skips. New coverage confirms `EMP-001`, `EMP001`, `emp-001`, and `emp001` resolve to the same canonical login account. MockMvc did not open a listening web server.
+- **PASS, live Oracle JDBC:** All 12 active account hashes still match their three-digit demo passwords; a repeat provision run created zero new audit records.
+- **PASS:** Oracle-profile executable JAR was rebuilt with `-DskipTests package`; this build did not start the application. The focused test run above supplied the test evidence.
+- **FAIL, resolved:** The first sandboxed Maven compile could not read a cached `reactive-streams` JAR. The approved retry outside that sandbox completed successfully.
+- **NOT_RUN:** Live HTTP login with the rebuilt JAR. The operator has reserved starting the web server for themselves.
+
+## 2026-11-10 Oracle demo path verification
+PASS: ordinary Surefire cases had zero failures; Oracle-profile package succeeded after stopping the process holding the JAR. PASS: HTTPS `EMP-001` login returned 200 and Oracle-backed employee search returned 200 with 20 rows. Initial package attempt failed because the running JAR was locked; retry succeeded. `local-mock` remains solely as an offline test harness.
+
+
+## Oracle-only 8080 demo (2026-11-10)
+
+2026-11-10 PASS: Oracle build and 296 ordinary tests (0 failures, 3 skipped). PASS: live HTTP 8080 EMP-001 login with the configured local demo credential and Oracle-backed employee query returning 20 records. PASS: port 8443 not listening. Oracle integration suite beyond these smoke checks remains at its prior status.
+
+## 2026-11-10 stored AI configuration
+PASS: ignored `bans_chatbot/.env` exists and is excluded by `.gitignore`; Oracle runtime imports it. PASS: repackaged Oracle JAR starts on HTTP 8080 with `.env` in Mock mode and EMP-001 login returns 200. NOT_RUN: real Gemini call; no API key was supplied.
+
+## Consolidated local settings (2026-11-10)
+
+2026-11-10 PASS: Repackaged Oracle JAR started using only `bans_chatbot/.env`; EMP-001 login HTTP 200 and employee query HTTP 200 with total 20. PASS: old and new values for all five migrated Oracle keys matched before old file removal. NOT_RUN: live Gemini, because no key has been supplied.
+
+
+## Chat UI redesign (2026-11-10)
+
+2026-11-10 PASS: focused WorkbenchMockMvcTest, WorkbenchClientIntegrationTest, and ChatMockMvcTest (6 tests, 0 failures). PASS: Node JavaScript syntax check, Oracle package, live 8080 login, chat-room GET, and delivery of the new HTML/CSS/JS. BLOCKED: visual browser screenshot because the browser access host was unavailable.

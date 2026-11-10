@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 @Service
-@Profile({"local-mock", "test"})
+@Profile({"test"})
 public class EmployeeDirectoryService {
     private final EmployeeDirectory directory;
 

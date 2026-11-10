@@ -17,7 +17,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest @AutoConfigureMockMvc @ActiveProfiles("local-mock") @DirtiesContext
+@SpringBootTest @AutoConfigureMockMvc @ActiveProfiles({"test", "fixture-test"}) @DirtiesContext
 class WorkbenchMockMvcTest {
     @Autowired MockMvc mvc;
     @Autowired InMemoryAccountRepository accounts;

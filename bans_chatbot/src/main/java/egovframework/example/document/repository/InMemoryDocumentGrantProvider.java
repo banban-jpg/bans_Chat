@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 
 /** Local-mock/test only; current grants reset with each process and are not Oracle evidence. */
 @Repository
-@Profile({"local-mock", "test"})
+@Profile({"test"})
 public class InMemoryDocumentGrantProvider implements DocumentGrantProvider {
     private final Set<SyntheticDocumentFixture.SyntheticGrant> grants = SyntheticDocumentFixture.grants();
 

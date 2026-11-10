@@ -17,7 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-@ActiveProfiles("local-mock")
+@ActiveProfiles({"test", "fixture-test"})
 class LocalMockWiringTest {
     @Autowired ApplicationContext context;
     @Autowired EmployeeDirectory directory;

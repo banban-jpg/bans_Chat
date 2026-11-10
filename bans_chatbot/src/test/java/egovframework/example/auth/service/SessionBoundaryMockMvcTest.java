@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("local-mock")
+@ActiveProfiles({"test", "fixture-test"})
 class SessionBoundaryMockMvcTest {
     @Autowired MockMvc mvc;
     @Autowired InMemoryAccountRepository accounts;

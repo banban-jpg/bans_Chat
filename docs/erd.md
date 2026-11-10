@@ -1,6 +1,6 @@
-# STEP 04 Oracle 26ai ERD
+# Oracle 26ai ERD — STEP 18 현재 source
 
-All 17 requested candidate tables are retained. No extra application table was added. The relation labeled `current_version` is added **after** `document_version` exists, through a composite FK that also matches `document_id`.
+V001의 17개 업무 테이블에 V005의 document_tag를 더해 현재 18개다. 아래는 Oracle 전용 source 설계이며 실제 DB 적용은 BLOCKED: ORACLE_26AI_NOT_INSTALLED다. current_version은 document_version 생성 후 document_id까지 일치시키는 복합 FK로 추가한다. V004는 배정 검토자를 추가하고 V005는 tags/index를 추가한다. DDL/manifest bytes는 STEP 18에서 바꾸지 않았다.
 
 ```mermaid
 erDiagram
@@ -25,6 +25,7 @@ erDiagram
     document_version ||--o{ document_review : reviewed
     document ||--o{ document_grant : grants
     document_version ||--o{ document_fragment : splits_into
+    document ||--o{ document_tag : tagged
     employee ||--o{ audit_event : acts
 
     department {
@@ -45,6 +46,8 @@ erDiagram
         VARCHAR2 login_id UK
         VARCHAR2 password_hash
         VARCHAR2 account_status
+        NUMBER credentials_version
+        NUMBER session_version
     }
     account_activation {
         NUMBER activation_id PK
@@ -78,6 +81,7 @@ erDiagram
         NUMBER room_seq
         NUMBER sender_id FK
         CLOB message_text
+        VARCHAR2 client_request_id
     }
     chat_read_state {
         NUMBER room_id PK,FK
@@ -92,12 +96,14 @@ erDiagram
         NUMBER department_id FK
         NUMBER current_version_id FK
         VARCHAR2 document_scope
+        NUMBER review_assignee_id FK
     }
     document_version {
         NUMBER version_id PK
         NUMBER document_id FK
         NUMBER version_no
         CLOB body_text
+        VARCHAR2 version_state
     }
     document_review {
         NUMBER review_id PK
@@ -119,6 +125,12 @@ erDiagram
         NUMBER fragment_no
         CHAR ai_searchable
         CHAR external_ai_allowed
+        CHAR synthetic_yn
+        CHAR non_sensitive_yn
+    }
+    document_tag {
+        NUMBER document_id PK,FK
+        VARCHAR2 tag_value PK
     }
     audit_event {
         NUMBER event_id PK
@@ -130,4 +142,4 @@ erDiagram
 
 `employee_account` separates credentials from the employee directory. `system_role` and `employee_role` separate security roles from job titles and departments. `document_review` records an approver and optional revocation; `document_grant` records a per-employee permission and optional revocation. `document_fragment` holds independent `ai_searchable` and `external_ai_allowed` flags. The database has no AI question, answer, prompt, transcript, or key table. `audit_event` stores metadata codes and IDs only.
 
-STEP 05 refines the still-unapplied V001 schema with synthetic company email/extension/duty columns and stable `document_code`/category columns for rerunnable Oracle seed matching. `document_version.version_state` also accepts `DISCARDED` for withdrawn examples. The 17-table count and dependency graph are unchanged; V001's SHA-256 manifest was updated before any Oracle migration was executed. See `fixture-and-seed.md` for the 5/20/12/20 synthetic rows and the separate seed runner.
+V001은 합성 회사 이메일/내선/duty와 stable document_code/category를 포함하고 DISCARDED 상태를 지원한다. 메시지는 room/seq 및 sender/client_request_id의 unique 조건을 사용한다. 여기에는 AI transcript/key 테이블이 없다. [fixture-and-seed.md](fixture-and-seed.md)와 [Oracle 체크리스트](oracle-install-validation.md)를 따른다. 런타임 SQL/제약/락의 실제 수락은 전부 Oracle 설치 후 대기다.

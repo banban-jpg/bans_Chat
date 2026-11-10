@@ -14,7 +14,7 @@ public class WorkbenchController {
     public WorkbenchController(Environment environment) { this.environment = environment; }
     @GetMapping("/")
     public String index(Model model, HttpServletResponse response) {
-        model.addAttribute("mock", environment.acceptsProfiles(Profiles.of("local-mock", "test")));
+        model.addAttribute("mock", environment.acceptsProfiles(Profiles.of("test")));
         response.setHeader("Cache-Control", "no-store");
         response.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
         response.setHeader("Referrer-Policy", "no-referrer");

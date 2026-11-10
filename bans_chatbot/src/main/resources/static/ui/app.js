@@ -1,7 +1,7 @@
-import {createApi,ApiError,errorMessage,renderMarkdown,renderPublished} from './api.js';
+import {createApi,ApiError,errorMessage,renderMarkdown,renderPublished} from './api.js?v=20261110';
 import {ChatConnection} from './stomp.js';
 const $=id=>document.getElementById(id),values=form=>Object.fromEntries(new FormData(form));
-const state={me:null,screen:'directory',employeePage:0,documentPage:0,room:0,messages:new Map(),cursor:0,pending:null,epoch:0};
+const state={me:null,screen:'directory',employeePage:0,documentPage:0,room:0,rooms:[],people:new Map(),messages:new Map(),cursor:0,pending:null,epoch:0};
 const api=createApi(expired),connection=new ChatConnection(api,{state:text=>{$('connection').textContent=text;},ready:()=>run(async()=>{await refreshRooms();await recover();}),message:incoming});
 function notice(text,error=false){$('status').textContent=text;$('status').dataset.error=String(error);}
 function fail(error){notice(errorMessage(error.status),true);}
@@ -10,12 +10,15 @@ function form(id,action){$(id).addEventListener('submit',async event=>{event.pre
 function button(text,action){const node=document.createElement('button');node.type='button';node.textContent=text;node.addEventListener('click',()=>run(action));return node;}
 function item(parent,text){const node=document.createElement('li');node.textContent=text;parent.appendChild(node);return node;}
 function expired(){
-  connection.stop();state.epoch++;state.me=null;state.room=0;state.messages.clear();state.pending=null;clearTimeout(state.pendingTimer);
-  api.reset();$('workspace').hidden=true;$('auth').hidden=false;$('logout').hidden=true;$('identity').textContent='';
+  connection.stop();state.epoch++;state.me=null;state.room=0;state.rooms=[];state.people.clear();state.messages.clear();state.pending=null;clearTimeout(state.pendingTimer);
+  api.reset();$('workspace').hidden=true;$('auth').hidden=!!$('first-admin-setup');$('logout').hidden=true;$('identity').textContent='';
   for(const id of ['employee-results','owner-results','rooms','messages','document-results','document-view','ai-answer','ai-facts','ai-sources','ai-type','activation-code'])$(id).replaceChildren();
   for(const node of document.querySelectorAll('textarea,input:not([type=checkbox])'))node.value='';
   document.querySelectorAll('input[type=checkbox]').forEach(node=>node.checked=false);
   $('message-form').elements.content.readOnly=false;
+  $('message-form').elements.content.disabled=true;$('message-send').disabled=true;
+  $('room-title').textContent='대화를 선택해 주세요';$('room-subtitle').textContent='왼쪽에서 대화를 고르거나 새 대화를 시작하세요.';$('room-avatar').textContent='?';$('room-filter').value='';
+  $('chat-empty').textContent='대화를 선택하면 메시지가 여기에 표시됩니다.';$('chat-empty').hidden=false;
   notice('세션이 만료되었습니다. 다시 로그인하세요.',true);
 }
 async function signedIn(){
@@ -25,7 +28,9 @@ async function signedIn(){
   const departments=await api.request('/api/departments');
   document.querySelectorAll('select.departments').forEach(select=>{select.replaceChildren();if(!select.required){const all=document.createElement('option');all.value='';all.textContent='전체';select.appendChild(all);}for(const d of departments){const option=document.createElement('option');option.value=d.departmentCode;option.textContent=d.departmentName;select.appendChild(option);}});
   const examples=await api.request('/api/ai/questions/examples');$('ai-question').replaceChildren();for(const text of examples.questions){const option=document.createElement('option');option.value=text;option.textContent=text;$('ai-question').appendChild(option);}
-  show('directory');await searchEmployees();connection.start();notice('로그인되었습니다. 가상 데이터만 사용하세요.');
+  show('directory');await searchEmployees();
+  try{const page=await api.request('/api/employees?name=&departmentId=&task=&page=0&size=100&sort=employeeId');state.people=new Map(page.items.map(person=>[person.employeeId,person.displayName]));}catch{state.people.clear();}
+  connection.start();notice('로그인되었습니다. 가상 데이터만 사용하세요.');
 }
 function show(screen){
   if(!state.me)return;if(screen==='admin'&&!state.me.roles.includes('ACCOUNT_ADMIN')){fail(new ApiError(403));return;}
@@ -36,7 +41,7 @@ function show(screen){
   $(screen).querySelector('h1').setAttribute('tabindex','-1');$(screen).querySelector('h1').focus();
 }
 document.querySelectorAll('[data-screen]').forEach(node=>node.onclick=()=>show(node.dataset.screen));
-form('login-form',async(data,form)=>{await api.request('/api/auth/login',{method:'POST',body:data});form.reset();api.reset();await signedIn();});
+form('login-form',async(data,form)=>{try{await api.request('/api/auth/login',{method:'POST',body:data});}catch(error){if(error.status===401){notice('직원 코드 또는 비밀번호가 올바르지 않습니다.',true);return;}throw error;}form.reset();api.reset();await signedIn();});
 form('activate-form',async(data,form)=>{await api.request('/api/auth/activate',{method:'POST',body:data});form.reset();notice('활성화되었습니다. 새 비밀번호로 로그인하세요.');});
 $('logout').onclick=()=>run(async()=>{await api.request('/api/auth/logout',{method:'POST'});expired();notice('로그아웃되었습니다.');});
 function renderPeople(parent,people){parent.replaceChildren();for(const employee of people){const li=item(parent,employee.displayName+' · '+employee.departmentCode+' · '+employee.jobTitle+' · '+employee.companyEmail+' · 내선 '+employee.extensionNo);if(employee.employeeId!==state.me.employeeCode)li.appendChild(button('대화하기',()=>openRoom(employee.employeeId)));}if(!people.length)item(parent,'검색 결과가 없습니다.');}
@@ -45,11 +50,48 @@ form('employee-search',async()=>{state.employeePage=0;await searchEmployees();no
 $('employee-prev').onclick=()=>run(async()=>{state.employeePage=Math.max(0,state.employeePage-1);await searchEmployees();});
 $('employee-next').onclick=()=>run(async()=>{state.employeePage++;await searchEmployees();});
 form('owner-search',async data=>{const page=await api.request('/api/tasks/owners?'+new URLSearchParams(data));renderPeople($('owner-results'),page.items);notice('담당자 조회가 완료되었습니다.');});
-async function refreshRooms(){const epoch=state.epoch;const rooms=await api.request('/api/chat/rooms');if(epoch!==state.epoch)return;$('rooms').replaceChildren();for(const room of rooms){const li=item($('rooms'),'미읽음 '+room.unreadCount+' · 읽음 '+room.lastReadSeq+'/'+room.lastRoomSeq);li.prepend(button(room.otherEmployeeId,()=>selectRoom(room.roomId,room.otherEmployeeId)));}if(!rooms.length)item($('rooms'),'대화가 없습니다.');}
+async function refreshRooms(){
+  const epoch=state.epoch,rooms=await api.request('/api/chat/rooms');if(epoch!==state.epoch)return;state.rooms=rooms;renderRoomList();
+}
+function renderRoomList(){
+  const rooms=state.rooms;
+  const filter=$('room-filter').value.trim().toUpperCase(),list=$('rooms');list.replaceChildren();
+  for(const room of rooms.filter(entry=>entry.otherEmployeeId.toUpperCase().includes(filter)||(state.people.get(entry.otherEmployeeId)||'').toUpperCase().includes(filter))){
+    const li=document.createElement('li'),entry=document.createElement('button');entry.type='button';entry.className='room-button';
+    entry.setAttribute('aria-current',String(Number(room.roomId)===state.room));entry.onclick=()=>run(()=>selectRoom(Number(room.roomId),room.otherEmployeeId));
+    const avatar=document.createElement('span');avatar.className='room-avatar';avatar.setAttribute('aria-hidden','true');avatar.textContent=room.otherEmployeeId.slice(-2);
+    const label=document.createElement('span');label.className='room-label';
+    const name=document.createElement('span');name.className='room-name';name.textContent=state.people.get(room.otherEmployeeId)||room.otherEmployeeId;
+    const preview=document.createElement('span');preview.className='room-preview';preview.textContent=room.otherEmployeeId+(room.lastRoomSeq?' · 메시지 '+room.lastRoomSeq+'개':' · 새 대화');
+    label.append(name,preview);entry.append(avatar,label);
+    if(room.unreadCount){const badge=document.createElement('span');badge.className='unread-badge';badge.textContent=room.unreadCount>99?'99+':String(room.unreadCount);badge.setAttribute('aria-label','읽지 않은 메시지 '+room.unreadCount+'개');entry.append(badge);}
+    li.append(entry);list.append(li);
+  }
+  if(!list.children.length){const empty=item(list,filter?'일치하는 대화가 없습니다.':'아직 대화가 없습니다.');empty.className='empty-room';}
+}
 async function openRoom(employee){if(state.pending)throw new ApiError(409);const room=await api.request('/api/chat/rooms',{method:'POST',body:{recipientEmployeeId:employee}});await selectRoom(Number(room.conversationId),employee);show('chat');}
-async function selectRoom(id,employee){if(state.pending)throw new ApiError(409);state.room=id;state.messages.clear();state.cursor=0;$('messages').replaceChildren();$('room-title').textContent=employee+'와의 1:1 대화';await recover();}
+async function selectRoom(id,employee){
+  if(state.pending)throw new ApiError(409);
+  if(state.room!==id)$('message-form').reset();
+  state.room=id;state.messages.clear();state.cursor=0;$('messages').replaceChildren();$('messages').parentElement.scrollTop=0;
+  $('room-title').textContent=state.people.get(employee)||employee;$('room-subtitle').textContent=employee+' · 1:1 대화 · 가상 데이터만 공유하세요';$('room-avatar').textContent=employee.slice(-2);
+  $('chat-empty').textContent='메시지를 불러오는 중입니다.';$('chat-empty').hidden=false;
+  $('message-form').elements.content.disabled=false;$('message-send').disabled=false;
+  await refreshRooms();await recover();
+}
 function merge(items){for(const message of items)state.messages.set(message.roomSeq,message);if(state.messages.size>500){const keys=[...state.messages.keys()].sort((a,b)=>a-b);for(const key of keys.slice(0,keys.length-500))state.messages.delete(key);notice('화면은 최근 500건까지 보관합니다.');}}
-function renderMessages(){const list=$('messages');list.replaceChildren();for(const message of [...state.messages.values()].sort((a,b)=>a.roomSeq-b.roomSeq))item(list,message.senderEmployeeId+' #'+message.roomSeq+'\n'+message.content);$('older').disabled=!state.cursor||state.messages.size>=500;}
+function renderMessages(){
+  const list=$('messages'),history=list.parentElement,nearBottom=history.scrollHeight-history.scrollTop-history.clientHeight<90;
+  list.replaceChildren();for(const message of [...state.messages.values()].sort((a,b)=>a.roomSeq-b.roomSeq)){
+    const row=document.createElement('li');if(message.senderEmployeeId===state.me.employeeCode)row.className='mine';
+    const meta=document.createElement('span');meta.className='message-meta';meta.textContent=(row.className==='mine'?'나':message.senderEmployeeId)+' · #'+message.roomSeq;
+    const bubble=document.createElement('span');bubble.className='message-bubble';bubble.textContent=message.content;
+    row.append(meta,bubble);list.append(row);
+  }
+  $('chat-empty').textContent=state.room?'아직 메시지가 없습니다. 첫 메시지를 보내보세요.':'대화를 선택하면 메시지가 여기에 표시됩니다.';
+  $('chat-empty').hidden=!!list.children.length;$('older').disabled=!state.cursor||state.messages.size>=500;
+  if(nearBottom)history.scrollTop=history.scrollHeight;
+}
 async function markRead(){if(!state.room||state.screen!=='chat'||document.hidden||!state.messages.size)return;const seq=Math.max(...state.messages.keys()),roomId=state.room;if(!connection.send('/app/chat.read',{roomId,lastReadSeq:seq}))await api.request('/api/chat/rooms/'+roomId+'/read-state',{method:'PUT',body:{lastReadSeq:seq}});}
 let recovery;
 async function recover(){
@@ -65,7 +107,7 @@ async function recover(){
     renderMessages();await markRead();
   })();try{await recovery;}finally{recovery=null;}
 }
-async function older(){if(!state.room||!state.cursor)return;const room=state.room,epoch=state.epoch;const page=await api.request('/api/chat/rooms/'+room+'/messages?size=50&beforeSeq='+state.cursor);if(room!==state.room||epoch!==state.epoch)return;merge(page.items);state.cursor=page.nextBeforeSeq;renderMessages();}
+async function older(){if(!state.room||!state.cursor)return;const room=state.room,epoch=state.epoch,history=$('messages').parentElement,priorHeight=history.scrollHeight,priorTop=history.scrollTop;const page=await api.request('/api/chat/rooms/'+room+'/messages?size=50&beforeSeq='+state.cursor);if(room!==state.room||epoch!==state.epoch)return;merge(page.items);state.cursor=page.nextBeforeSeq;renderMessages();history.scrollTop=priorTop+history.scrollHeight-priorHeight;}
 function settle(message){const pending=state.pending;if(!pending)return;clearTimeout(state.pendingTimer);if(state.room===pending.roomId){merge([message]);renderMessages();}state.pending=null;$('message-form').reset();$('message-form').elements.content.readOnly=false;notice('메시지가 전송되었습니다.');run(async()=>{await markRead();await refreshRooms();});}
 function incoming(subscription,data){
   if(!state.me)return;
@@ -82,6 +124,9 @@ form('message-form',async data=>{
   if(connection.send('/app/chat.send',pending)){notice('전송 확인 중');state.pendingTimer=setTimeout(()=>confirmPending(pending),4000);}else await confirmPending(pending);
 });
 $('rooms-refresh').onclick=()=>run(refreshRooms);$('older').onclick=()=>run(older);$('reconnect').onclick=()=>{connection.start();run(recover);};
+$('room-filter').addEventListener('input',renderRoomList);
+$('new-chat').onclick=()=>{show('directory');$('employee-search').querySelector('[name="name"]').focus();notice('직원을 검색한 뒤 대화하기를 누르세요.');};
+$('message-content').addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();if(!$('message-content').disabled)$('message-form').requestSubmit();}});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.me&&state.screen==='chat')run(recover);});
 async function searchDocuments(){const page=await api.request('/api/documents/search?'+new URLSearchParams({...values($('document-search')),page:state.documentPage,size:10}));$('document-results').replaceChildren();for(const hit of page.items){const li=item($('document-results'),hit.title+' · '+hit.excerpt);li.appendChild(button('근거 보기',()=>openSource('/api/documents/'+hit.documentId+'/versions/'+hit.versionId+'/fragments/'+hit.fragmentId)));}if(!page.items.length)item($('document-results'),'접근 가능한 검색 결과가 없습니다.');$('document-more').disabled=!page.hasMore;}
 async function openSource(path){if(!/^\/api\/documents\/[1-9][0-9]*\/versions\/[1-9][0-9]*\/fragments\/[1-9][0-9]*$/.test(path))throw new ApiError(400);$('document-view').replaceChildren();const source=await api.request(path);show('documents');renderMarkdown($('document-view'),source.content);notice('현재 권한으로 문서 근거를 확인했습니다.');}
@@ -107,5 +152,6 @@ form('admin-create',async(data,form)=>{await api.request('/api/admin/employees',
 form('admin-change',async data=>{if(!['status','department'].includes(data.action))throw new ApiError(400);const body=data.action==='status'?{status:data.status}:{departmentId:data.departmentId};await api.request('/api/admin/employees/'+encodeURIComponent(data.employeeId)+'/'+data.action,{method:'PATCH',body});notice('직원 정보가 변경되었습니다.');});
 form('activation-issue',async data=>{$('activation-code').textContent='';const code=await api.request('/api/admin/activations',{method:'POST',body:data});$('activation-code').textContent=code.code;notice('활성화 코드가 발급되었습니다. 안전하게 전달한 뒤 표시를 지우세요.');});
 $('clear-code').onclick=()=>{$('activation-code').textContent='';};
+if($('setup-refresh'))$('setup-refresh').onclick=()=>location.reload();
 window.addEventListener('pagehide',()=>{connection.stop();$('activation-code').textContent='';for(const id of ['ai-answer','ai-sources','ai-facts'])$(id).replaceChildren();});
-run(async()=>{try{await signedIn();}catch(error){if(error.status===401)notice('가상 직원 계정으로 로그인하세요.');else throw error;}});
+run(async()=>{try{await signedIn();}catch(error){if(error.status===401)notice($('first-admin-setup')?'로컬 Oracle 설정 파일에 EMP-001 비밀번호를 지정하고 서버를 다시 시작하세요.':'가상 직원 계정으로 로그인하세요.');else throw error;}});

@@ -58,7 +58,7 @@ class AiToolSecurityTest {
         var passwords = new BCryptPasswordEncoder(4);
         accounts = new InMemoryAccountRepository("", passwords, directory);
         accounts.provisionForTest("EMP-002", passwords.encode(UUID.randomUUID().toString()));
-        var env = new MockEnvironment(); env.setActiveProfiles("local-mock");
+        var env = new MockEnvironment(); env.setActiveProfiles("fixture-test");
         store = new InMemoryDocumentWorkspace(env); workflow = new ManagedDocumentService(store, accounts);
         documents = spy(new DocumentSearchService(new InMemoryDocumentSearchRepository(store), store, workflow));
         organization = spy(new OrganizationService(directory)); provider = spy(new MockGeminiProvider());
